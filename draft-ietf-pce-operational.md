@@ -50,7 +50,7 @@ informative:
 
 --- abstract
 
-This document clarifies certain aspects of
+This document clarifies certain operational behavior aspects of
 the PCEP protocol.  The content of this document has been compiled
 based on several interop exercises.
 
@@ -128,23 +128,29 @@ to avoid renaming the term. Alternatively, the term "LSP" could be replaced with
 
 ## Structure
 
-LSP-DB contains two types of objects: LSPs and Tunnels.  An LSP is
-identified by the LSP-IDENTIFIERS TLV.  A Tunnel is identified by the
-PLSP-ID in the LSP object and/or the SYMBOLIC-NAME.  See [RFC8231].
+The distinction between Tunnels and LSPs in the LSP-DB is essential for accurately
+modeling state information in PCEP, including procedures such as make-before-break,
+and for maintaining consistent state management across PCEP speakers.
+
+The LSP-DB contains two types of information: LSPs and Tunnels. An LSP is identified
+by the LSP-IDENTIFIERS TLV, while a Tunnel is identified by the PLSP-ID in the LSP
+object and/or the SYMBOLIC-NAME (see [RFC8231]).
 
 A Tunnel may or may not correspond to an actual tunnel on the router. For
 example, working and protect paths can be implemented as a single
-tunnel interface, but in PCEP, these are considered as two different
-Tunnels, because they have different PLSP-IDs.
+tunnel interface, but in PCEP, these are represented as two different
+Tunnels with different PLSP-IDs.
 
 An LSP can be viewed as an instance of a Tunnel. In steady state,
-a Tunnel typically has only one LSP, but during make-before-break procedures (see [RFC3209]),
-multiple LSPs may exist simultaneously to represent both new and old instances.
+a Tunnel typically has a single LSP; however, during make-before-break procedures (see [RFC3209]),
+multiple LSPs may exist simultaneously to represent both the new and old instances during the transition.
 
 ## Synchronization
 
-Both PCE and PCC maintain their separate copies of the LSP-DB.  The
-PCE LSP-DB is only modified by PCRpt messages, no other PCEP message
+Since the LSP-DB contains PCEP-specific information such as PLSP-IDs,
+which remain constant for the duration of a PCEP session, both the PCE and
+PCC maintain their own local copies of the LSP-DB.
+The PCE LSP-DB is only modified by PCRpt messages, no other PCEP message
 may modify the PCE LSP-DB.  The PCC LSP-DB is built from actual
 forwarding state that PCC has installed.  PCC uses PCRpt messages to
 synchronize its local LSP-DB to the PCE.
@@ -156,9 +162,11 @@ collect traffic statistics and use them in the computation.  However,
 these traffic statistics are not part of the LSP-DB, but only
 reference it.
 
-The LSP-DB on both the PCC and the PCE only stores the actual state
-in the network, it does not store the desired state.  For example,
-consider the case of PCE Initiated LSP, configured on the PCE.  When
+The LSP-DB on both the PCC and the PCE primarily stores the actual state
+in the network. An implementation may choose to store additional information such as desired state,
+however the LSP-DB still contains the live view of actual state and not infer the actual state
+is an immediate reflection of the desired state.
+For example, consider the case of PCE Initiated LSP, configured on the PCE.  When
 the operator modifies the configuration of this LSP, that is a change
 in desired state.  The actual state has not yet changed, so LSP-DB is
 not modified yet.  The LSP-DB is only modified after the PCE sends
@@ -168,10 +176,15 @@ its own PCC LSP DB and send a PCRpt to the PCE(s) to synchronize the
 change.  When the PCE receives the PCRpt msg, it updates its own PCE
 LSP DB.  After this, the PCC LSP-DB and PCE LSP-DB are in sync.
 
+## Make before Break (MBB)
 
-## Successful MBB
+Due to variations in how different implementations interpret or handle MBB
+procedures—sometimes resulting in incorrect message processing or misinterpretation—the
+following section provides illustrative examples to clarify expected MBB behavior.
 
-The following is an example of performing MBB to switch a Tunnel from one
+### Successful MBB
+
+Below is an example of performing MBB to switch a Tunnel from one
 path to another. The path encoded into the ERO object
 is represented as ERO={A} and ERO={B}.
 
@@ -226,7 +239,7 @@ ID=2).
                 Figure 3: Content of LSP DB
 ~~~
 
-## Aborted MBB
+### Aborted MBB
 
 The MBB process can abort when the newly created LSP is destroyed
 before it is installed as traffic carrying.  This scenario is
@@ -275,7 +288,7 @@ LSP-ID=3).
 
 # PCEP Association Database
 
-PCEP Association is a group of zero or more LSPs.
+PCEP Association is the instantiate of a group containing at least one LSP.
 
 The PCE ASSO DB is populated by PCRpt messages and/or via
 configuration on the PCE itself. An Association is identified by the
@@ -315,7 +328,9 @@ LSP-ID=1, ASSO_PARAM=A, ASSO_R_FLAG=0).
                 Figure 8: Content of PCE ASSO DB
 ~~~
 
-PCC updates the first LSP, the PCC is NOT REQUIRED to send the
+PCC updates the first LSP. As [RFC8697] indicates, subsequent PcRpt
+should include only the associations that are being modified or removed.
+Therefore it is optional as to send the
 ASSOCIATION object in this PCRpt, since the LSP is already in the
 Association.  PCC sends PCRpt(R-FLAG=0, PLSP-ID=100, LSP-ID=1).  The
 content of the PCE ASSO DB is unchanged.  Note that the PCC sends the
@@ -356,7 +371,7 @@ ID=1, ASSO_PARAM=A, ASSO_R_FLAG=1).  The PCE ASSO DB is now empty.
 +---------------------------------------------------------------+
 | ASSO            | LSP                                         |
 +-----------------+---------------------------------------------+
-| ASSO_PARAM=A    |                                             |
+| -               |                                             |
 +---------------------------------------------------------------+
 
                 Figure 11: Content of PCE ASSO DB
@@ -416,11 +431,16 @@ ID=1).
 
 # Computation Constraints
 
-For any PCEP object that does not have an explicit removal flag, the
-absence of that object indicates removal of the constraint specified
-by that object.  For example, suppose the first state-report contains
-an LSPA object with some affinity constraints.  Then if a subsequent
-state-report does not contain an LSPA object, then this means that
+As well as reporting any state change in the network on a PCRpt message,
+a PCC may also change the parameters of a delegated LSP. For example, it may remove or
+modify the computation constraints that it wishes the PCE to apply as it
+computes any updated paths in the future. For any PCEP object that
+specifies a path computation constraint and that does not have a defined
+explicit removal flag, the absence of that entire object on a repeat or
+follow-up PcRpt message indicates removal of the constraint previously
+specified by that object. For example,
+suppose the first PcRpt contains an LSPA object with some affinity constraints.
+Then if a subsequent PcRpt does not contain an LSPA object, then this means that
 the previously specified affinity constraints do not apply anymore.
 Same applies to all PCEP objects, like METRIC, BANDWIDTH, etc., which
 do not have an explicit flag for removal.  This simply ensures that
@@ -471,7 +491,7 @@ None at this time.
 # Acknowledgments
 {:numbered="false"}
 
-The authors would like to thank Adrian Farrel for useful review
+The authors would like to thank Adrian Farrel and Tom Petch for useful review and feedback.
 comments.
 
 # Contributors
