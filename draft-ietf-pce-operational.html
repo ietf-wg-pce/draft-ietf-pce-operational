@@ -12,7 +12,7 @@
 <meta content="Hari Kotni" name="author">
 <meta content="Andrew Stone" name="author">
 <meta content="
-       This document clarifies certain aspects of
+       This document clarifies certain operational behavior aspects of
 the PCEP protocol.  The content of this document has been compiled
 based on several interop exercises. 
     " name="description">
@@ -1105,7 +1105,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <h1 id="title">PCEP Operational Clarification</h1>
 <section id="section-abstract">
       <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
-<p id="section-abstract-1">This document clarifies certain aspects of
+<p id="section-abstract-1">This document clarifies certain operational behavior aspects of
 the PCEP protocol.  The content of this document has been compiled
 based on several interop exercises.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
 </section>
@@ -1187,10 +1187,15 @@ based on several interop exercises.<a href="#section-abstract-1" class="pilcrow"
                 <p id="section-toc.1-1.4.2.2.1"><a href="#section-4.2" class="auto internal xref">4.2</a>.  <a href="#name-synchronization" class="internal xref">Synchronization</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.3">
-                <p id="section-toc.1-1.4.2.3.1"><a href="#section-4.3" class="auto internal xref">4.3</a>.  <a href="#name-successful-mbb" class="internal xref">Successful MBB</a></p>
+                <p id="section-toc.1-1.4.2.3.1"><a href="#section-4.3" class="auto internal xref">4.3</a>.  <a href="#name-make-before-break-mbb" class="internal xref">Make before Break (MBB)</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.3.2.1">
+                    <p id="section-toc.1-1.4.2.3.2.1.1"><a href="#section-4.3.1" class="auto internal xref">4.3.1</a>.  <a href="#name-successful-mbb" class="internal xref">Successful MBB</a></p>
 </li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.4">
-                <p id="section-toc.1-1.4.2.4.1"><a href="#section-4.4" class="auto internal xref">4.4</a>.  <a href="#name-aborted-mbb" class="internal xref">Aborted MBB</a></p>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.3.2.2">
+                    <p id="section-toc.1-1.4.2.3.2.2.1"><a href="#section-4.3.2" class="auto internal xref">4.3.2</a>.  <a href="#name-aborted-mbb" class="internal xref">Aborted MBB</a></p>
+</li>
+                </ul>
 </li>
             </ul>
 </li>
@@ -1317,16 +1322,19 @@ to avoid renaming the term. Alternatively, the term "LSP" could be replaced with
         <h3 id="name-structure">
 <a href="#section-4.1" class="section-number selfRef">4.1. </a><a href="#name-structure" class="section-name selfRef">Structure</a>
         </h3>
-<p id="section-4.1-1">LSP-DB contains two types of objects: LSPs and Tunnels.  An LSP is
-identified by the LSP-IDENTIFIERS TLV.  A Tunnel is identified by the
-PLSP-ID in the LSP object and/or the SYMBOLIC-NAME.  See <span>[<a href="#RFC8231" class="cite xref">RFC8231</a>]</span>.<a href="#section-4.1-1" class="pilcrow">¶</a></p>
-<p id="section-4.1-2">A Tunnel may or may not correspond to an actual tunnel on the router. For
+<p id="section-4.1-1">The distinction between Tunnels and LSPs in the LSP-DB is essential for accurately
+modeling state information in PCEP, including procedures such as make-before-break,
+and for maintaining consistent state management across PCEP speakers.<a href="#section-4.1-1" class="pilcrow">¶</a></p>
+<p id="section-4.1-2">The LSP-DB contains two types of information: LSPs and Tunnels. An LSP is identified
+by the LSP-IDENTIFIERS TLV, while a Tunnel is identified by the PLSP-ID in the LSP
+object and/or the SYMBOLIC-NAME (see <span>[<a href="#RFC8231" class="cite xref">RFC8231</a>]</span>).<a href="#section-4.1-2" class="pilcrow">¶</a></p>
+<p id="section-4.1-3">A Tunnel may or may not correspond to an actual tunnel on the router. For
 example, working and protect paths can be implemented as a single
-tunnel interface, but in PCEP, these are considered as two different
-Tunnels, because they have different PLSP-IDs.<a href="#section-4.1-2" class="pilcrow">¶</a></p>
-<p id="section-4.1-3">An LSP can be viewed as an instance of a Tunnel. In steady state,
-a Tunnel typically has only one LSP, but during make-before-break procedures (see <span>[<a href="#RFC3209" class="cite xref">RFC3209</a>]</span>),
-multiple LSPs may exist simultaneously to represent both new and old instances.<a href="#section-4.1-3" class="pilcrow">¶</a></p>
+tunnel interface, but in PCEP, these are represented as two different
+Tunnels with different PLSP-IDs.<a href="#section-4.1-3" class="pilcrow">¶</a></p>
+<p id="section-4.1-4">An LSP can be viewed as an instance of a Tunnel. In steady state,
+a Tunnel typically has a single LSP; however, during make-before-break procedures (see <span>[<a href="#RFC3209" class="cite xref">RFC3209</a>]</span>),
+multiple LSPs may exist simultaneously to represent both the new and old instances during the transition.<a href="#section-4.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="synchronization">
@@ -1334,8 +1342,10 @@ multiple LSPs may exist simultaneously to represent both new and old instances.<
         <h3 id="name-synchronization">
 <a href="#section-4.2" class="section-number selfRef">4.2. </a><a href="#name-synchronization" class="section-name selfRef">Synchronization</a>
         </h3>
-<p id="section-4.2-1">Both PCE and PCC maintain their separate copies of the LSP-DB.  The
-PCE LSP-DB is only modified by PCRpt messages, no other PCEP message
+<p id="section-4.2-1">Since the LSP-DB contains PCEP-specific information such as PLSP-IDs,
+which remain constant for the duration of a PCEP session, both the PCE and
+PCC maintain their own local copies of the LSP-DB.
+The PCE LSP-DB is only modified by PCRpt messages, no other PCEP message
 may modify the PCE LSP-DB.  The PCC LSP-DB is built from actual
 forwarding state that PCC has installed.  PCC uses PCRpt messages to
 synchronize its local LSP-DB to the PCE.<a href="#section-4.2-1" class="pilcrow">¶</a></p>
@@ -1345,9 +1355,11 @@ outside of LSP-DB.  For example, the PCE can use other mechanisms to
 collect traffic statistics and use them in the computation.  However,
 these traffic statistics are not part of the LSP-DB, but only
 reference it.<a href="#section-4.2-2" class="pilcrow">¶</a></p>
-<p id="section-4.2-3">The LSP-DB on both the PCC and the PCE only stores the actual state
-in the network, it does not store the desired state.  For example,
-consider the case of PCE Initiated LSP, configured on the PCE.  When
+<p id="section-4.2-3">The LSP-DB on both the PCC and the PCE primarily stores the actual state
+in the network. An implementation may choose to store additional information such as desired state,
+however the LSP-DB still contains the live view of actual state and not infer the actual state
+is an immediate reflection of the desired state.
+For example, consider the case of PCE Initiated LSP, configured on the PCE.  When
 the operator modifies the configuration of this LSP, that is a change
 in desired state.  The actual state has not yet changed, so LSP-DB is
 not modified yet.  The LSP-DB is only modified after the PCE sends
@@ -1358,17 +1370,25 @@ change.  When the PCE receives the PCRpt msg, it updates its own PCE
 LSP DB.  After this, the PCC LSP-DB and PCE LSP-DB are in sync.<a href="#section-4.2-3" class="pilcrow">¶</a></p>
 </section>
 </div>
-<div id="successful-mbb">
+<div id="make-before-break-mbb">
 <section id="section-4.3">
-        <h3 id="name-successful-mbb">
-<a href="#section-4.3" class="section-number selfRef">4.3. </a><a href="#name-successful-mbb" class="section-name selfRef">Successful MBB</a>
+        <h3 id="name-make-before-break-mbb">
+<a href="#section-4.3" class="section-number selfRef">4.3. </a><a href="#name-make-before-break-mbb" class="section-name selfRef">Make before Break (MBB)</a>
         </h3>
-<p id="section-4.3-1">The following is an example of performing MBB to switch a Tunnel from one
+<p id="section-4.3-1">Due to variations in how different implementations interpret or handle MBB
+procedures—sometimes resulting in incorrect message processing or misinterpretation—the
+following section provides illustrative examples to clarify expected MBB behavior.<a href="#section-4.3-1" class="pilcrow">¶</a></p>
+<div id="successful-mbb">
+<section id="section-4.3.1">
+          <h4 id="name-successful-mbb">
+<a href="#section-4.3.1" class="section-number selfRef">4.3.1. </a><a href="#name-successful-mbb" class="section-name selfRef">Successful MBB</a>
+          </h4>
+<p id="section-4.3.1-1">Below is an example of performing MBB to switch a Tunnel from one
 path to another. The path encoded into the ERO object
-is represented as ERO={A} and ERO={B}.<a href="#section-4.3-1" class="pilcrow">¶</a></p>
-<p id="section-4.3-2">PCC has an existing LSP in UP state, with LSP-ID=2.  PCC sends
-PCRpt(R-FLAG=0, PLSP-ID=100, LSP-ID=2, ERO={A}, OPER-FLAG=UP).<a href="#section-4.3-2" class="pilcrow">¶</a></p>
-<div class="alignLeft art-text artwork" id="section-4.3-3">
+is represented as ERO={A} and ERO={B}.<a href="#section-4.3.1-1" class="pilcrow">¶</a></p>
+<p id="section-4.3.1-2">PCC has an existing LSP in UP state, with LSP-ID=2.  PCC sends
+PCRpt(R-FLAG=0, PLSP-ID=100, LSP-ID=2, ERO={A}, OPER-FLAG=UP).<a href="#section-4.3.1-2" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-4.3.1-3">
 <pre>
 +---------------------------------------------------------------+
 | TUNNEL          | LSP                                         |
@@ -1377,9 +1397,9 @@ PCRpt(R-FLAG=0, PLSP-ID=100, LSP-ID=2, ERO={A}, OPER-FLAG=UP).<a href="#section-
 +---------------------------------------------------------------+
 
                 Figure 1: Content of LSP DB
-</pre><a href="#section-4.3-3" class="pilcrow">¶</a>
+</pre><a href="#section-4.3.1-3" class="pilcrow">¶</a>
 </div>
-<p id="section-4.3-4">PCC initiates the MBB procedure by creating a new LSP with LSP-ID=3.
+<p id="section-4.3.1-4">PCC initiates the MBB procedure by creating a new LSP with LSP-ID=3.
 It does not matter what triggered the creation of the new LSP, it
 could have been due to a new path received via PCUpd (if the given
 Tunnel is delegated), or it could have been local computation on the
@@ -1387,10 +1407,10 @@ PCC (if the Tunnel is locally computed on the PCC), or it could have
 been a change in configuration on the PCC (if the Tunnel's path is
 explicitly configured on the PCC).  It is important to emphasize that
 the procedure for updating the LSP-DB is common, regardless of the
-trigger that caused the change.<a href="#section-4.3-4" class="pilcrow">¶</a></p>
-<p id="section-4.3-5">PCC sends PCRpt(R-FLAG=0, PLSP-ID=100, LSP-ID=3, ERO={B}, OPER-
-FLAG=UP).<a href="#section-4.3-5" class="pilcrow">¶</a></p>
-<div class="alignLeft art-text artwork" id="section-4.3-6">
+trigger that caused the change.<a href="#section-4.3.1-4" class="pilcrow">¶</a></p>
+<p id="section-4.3.1-5">PCC sends PCRpt(R-FLAG=0, PLSP-ID=100, LSP-ID=3, ERO={B}, OPER-
+FLAG=UP).<a href="#section-4.3.1-5" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-4.3.1-6">
 <pre>
 +---------------------------------------------------------------+
 | TUNNEL          | LSP                                         |
@@ -1400,12 +1420,12 @@ FLAG=UP).<a href="#section-4.3-5" class="pilcrow">¶</a></p>
 +---------------------------------------------------------------+
 
                 Figure 2: Content of LSP DB
-</pre><a href="#section-4.3-6" class="pilcrow">¶</a>
+</pre><a href="#section-4.3.1-6" class="pilcrow">¶</a>
 </div>
-<p id="section-4.3-7">After traffic has successfully switched to the new LSP, the PCC
+<p id="section-4.3.1-7">After traffic has successfully switched to the new LSP, the PCC
 cleans up the old LSP.  PCC sends PCRpt(R-FLAG=1, PLSP-ID=100, LSP-
-ID=2).<a href="#section-4.3-7" class="pilcrow">¶</a></p>
-<div class="alignLeft art-text artwork" id="section-4.3-8">
+ID=2).<a href="#section-4.3.1-7" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-4.3.1-8">
 <pre>
 +---------------------------------------------------------------+
 | TUNNEL          | LSP                                         |
@@ -1414,21 +1434,21 @@ ID=2).<a href="#section-4.3-7" class="pilcrow">¶</a></p>
 +---------------------------------------------------------------+
 
                 Figure 3: Content of LSP DB
-</pre><a href="#section-4.3-8" class="pilcrow">¶</a>
+</pre><a href="#section-4.3.1-8" class="pilcrow">¶</a>
 </div>
 </section>
 </div>
 <div id="aborted-mbb">
-<section id="section-4.4">
-        <h3 id="name-aborted-mbb">
-<a href="#section-4.4" class="section-number selfRef">4.4. </a><a href="#name-aborted-mbb" class="section-name selfRef">Aborted MBB</a>
-        </h3>
-<p id="section-4.4-1">The MBB process can abort when the newly created LSP is destroyed
+<section id="section-4.3.2">
+          <h4 id="name-aborted-mbb">
+<a href="#section-4.3.2" class="section-number selfRef">4.3.2. </a><a href="#name-aborted-mbb" class="section-name selfRef">Aborted MBB</a>
+          </h4>
+<p id="section-4.3.2-1">The MBB process can abort when the newly created LSP is destroyed
 before it is installed as traffic carrying.  This scenario is
-described below.<a href="#section-4.4-1" class="pilcrow">¶</a></p>
-<p id="section-4.4-2">PCC has an existing LSP in UP state, with LSP-ID=2.  PCC sends
-PCRpt(R-FLAG=0, OPER-FLAG=UP, PLSP-ID=100, LSP-ID=2).<a href="#section-4.4-2" class="pilcrow">¶</a></p>
-<div class="alignLeft art-text artwork" id="section-4.4-3">
+described below.<a href="#section-4.3.2-1" class="pilcrow">¶</a></p>
+<p id="section-4.3.2-2">PCC has an existing LSP in UP state, with LSP-ID=2.  PCC sends
+PCRpt(R-FLAG=0, OPER-FLAG=UP, PLSP-ID=100, LSP-ID=2).<a href="#section-4.3.2-2" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-4.3.2-3">
 <pre>
 +---------------------------------------------------------------+
 | TUNNEL          | LSP                                         |
@@ -1437,12 +1457,12 @@ PCRpt(R-FLAG=0, OPER-FLAG=UP, PLSP-ID=100, LSP-ID=2).<a href="#section-4.4-2" cl
 +---------------------------------------------------------------+
 
                 Figure 4: Content of LSP DB
-</pre><a href="#section-4.4-3" class="pilcrow">¶</a>
+</pre><a href="#section-4.3.2-3" class="pilcrow">¶</a>
 </div>
-<p id="section-4.4-4">MBB procedure is initiated, a new LSP is created with LSP-ID=3.  LSP
+<p id="section-4.3.2-4">MBB procedure is initiated, a new LSP is created with LSP-ID=3.  LSP
 is currently being established, so its oper state is DOWN.  PCC sends
-PCRpt(R-FLAG=0, OPER-FLAG=DOWN, PLSP-ID=100, LSP-ID=3).<a href="#section-4.4-4" class="pilcrow">¶</a></p>
-<div class="alignLeft art-text artwork" id="section-4.4-5">
+PCRpt(R-FLAG=0, OPER-FLAG=DOWN, PLSP-ID=100, LSP-ID=3).<a href="#section-4.3.2-4" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-4.3.2-5">
 <pre>
 +---------------------------------------------------------------+
 | TUNNEL          | LSP                                         |
@@ -1452,11 +1472,11 @@ PCRpt(R-FLAG=0, OPER-FLAG=DOWN, PLSP-ID=100, LSP-ID=3).<a href="#section-4.4-4" 
 +---------------------------------------------------------------+
 
                 Figure 5: Content of LSP DB
-</pre><a href="#section-4.4-5" class="pilcrow">¶</a>
+</pre><a href="#section-4.3.2-5" class="pilcrow">¶</a>
 </div>
-<p id="section-4.4-6">MBB procedure is aborted.  PCC sends PCRpt(R-FLAG=1, PLSP-ID=100,
-LSP-ID=3).<a href="#section-4.4-6" class="pilcrow">¶</a></p>
-<div class="alignLeft art-text artwork" id="section-4.4-7">
+<p id="section-4.3.2-6">MBB procedure is aborted.  PCC sends PCRpt(R-FLAG=1, PLSP-ID=100,
+LSP-ID=3).<a href="#section-4.3.2-6" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-4.3.2-7">
 <pre>
 +---------------------------------------------------------------+
 | TUNNEL          | LSP                                         |
@@ -1465,7 +1485,9 @@ LSP-ID=3).<a href="#section-4.4-6" class="pilcrow">¶</a></p>
 +---------------------------------------------------------------+
 
                 Figure 6: Content of LSP DB
-</pre><a href="#section-4.4-7" class="pilcrow">¶</a>
+</pre><a href="#section-4.3.2-7" class="pilcrow">¶</a>
+</div>
+</section>
 </div>
 </section>
 </div>
@@ -1476,7 +1498,7 @@ LSP-ID=3).<a href="#section-4.4-6" class="pilcrow">¶</a></p>
       <h2 id="name-pcep-association-database">
 <a href="#section-5" class="section-number selfRef">5. </a><a href="#name-pcep-association-database" class="section-name selfRef">PCEP Association Database</a>
       </h2>
-<p id="section-5-1">PCEP Association is a group of zero or more LSPs.<a href="#section-5-1" class="pilcrow">¶</a></p>
+<p id="section-5-1">PCEP Association is the instantiate of a group containing at least one LSP.<a href="#section-5-1" class="pilcrow">¶</a></p>
 <p id="section-5-2">The PCE ASSO DB is populated by PCRpt messages and/or via
 configuration on the PCE itself. An Association is identified by the
 Association Parameters. As the Association Parameters contain many fields,
@@ -1516,7 +1538,9 @@ LSP-ID=1, ASSO_PARAM=A, ASSO_R_FLAG=0).<a href="#section-5.1-4" class="pilcrow">
                 Figure 8: Content of PCE ASSO DB
 </pre><a href="#section-5.1-5" class="pilcrow">¶</a>
 </div>
-<p id="section-5.1-6">PCC updates the first LSP, the PCC is NOT <span class="bcp14">REQUIRED</span> to send the
+<p id="section-5.1-6">PCC updates the first LSP. As <span>[<a href="#RFC8697" class="cite xref">RFC8697</a>]</span> indicates, subsequent PcRpt
+should include only the associations that are being modified or removed.
+Therefore it is optional as to send the
 ASSOCIATION object in this PCRpt, since the LSP is already in the
 Association.  PCC sends PCRpt(R-FLAG=0, PLSP-ID=100, LSP-ID=1).  The
 content of the PCE ASSO DB is unchanged.  Note that the PCC sends the
@@ -1557,7 +1581,7 @@ ID=1, ASSO_PARAM=A, ASSO_R_FLAG=1).  The PCE ASSO DB is now empty.<a href="#sect
 +---------------------------------------------------------------+
 | ASSO            | LSP                                         |
 +-----------------+---------------------------------------------+
-| ASSO_PARAM=A    |                                             |
+| -               |                                             |
 +---------------------------------------------------------------+
 
                 Figure 11: Content of PCE ASSO DB
@@ -1627,11 +1651,16 @@ ID=1).<a href="#section-5.2-7" class="pilcrow">¶</a></p>
       <h2 id="name-computation-constraints">
 <a href="#section-6" class="section-number selfRef">6. </a><a href="#name-computation-constraints" class="section-name selfRef">Computation Constraints</a>
       </h2>
-<p id="section-6-1">For any PCEP object that does not have an explicit removal flag, the
-absence of that object indicates removal of the constraint specified
-by that object.  For example, suppose the first state-report contains
-an LSPA object with some affinity constraints.  Then if a subsequent
-state-report does not contain an LSPA object, then this means that
+<p id="section-6-1">As well as reporting any state change in the network on a PCRpt message,
+a PCC may also change the parameters of a delegated LSP. For example, it may remove or
+modify the computation constraints that it wishes the PCE to apply as it
+computes any updated paths in the future. For any PCEP object that
+specifies a path computation constraint and that does not have a defined
+explicit removal flag, the absence of that entire object on a repeat or
+follow-up PcRpt message indicates removal of the constraint previously
+specified by that object. For example,
+suppose the first PcRpt contains an LSPA object with some affinity constraints.
+Then if a subsequent PcRpt does not contain an LSPA object, then this means that
 the previously specified affinity constraints do not apply anymore.
 Same applies to all PCEP objects, like METRIC, BANDWIDTH, etc., which
 do not have an explicit flag for removal.  This simply ensures that
@@ -1722,7 +1751,7 @@ it is overloaded, otherwise the the LSP-DB on PCE may go out of sync.<a href="#s
       <h2 id="name-acknowledgments">
 <a href="#name-acknowledgments" class="section-name selfRef">Acknowledgments</a>
       </h2>
-<p id="appendix-A-1">The authors would like to thank Adrian Farrel for useful review
+<p id="appendix-A-1">The authors would like to thank Adrian Farrel and Tom Petch for useful review and feedback.
 comments.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
 </section>
 </div>
