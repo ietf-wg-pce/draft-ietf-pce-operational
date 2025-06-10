@@ -92,7 +92,7 @@ Association parameters:  As described in [RFC8697], the combination
 of the mandatory fields Association type, Association ID and
 Association Source in the ASSOCIATION object uniquely identify the
 association group.  If the optional TLVs - Global Association
-Source or Extended Association ID are included, then they MUST be
+Source or Extended Association ID are included, then they are
 included in combination with mandatory fields to uniquely identify
 the association group.
 
@@ -105,6 +105,15 @@ ERO: Explicit Route Object is the path of the LSP encoded into a PCEP object.
 In this document, an empty ERO object, i.e., without any subobjects,
 is represented with notation "ERO={}". An ERO object containing a given
 sequence of subobjects is represented as "ERO={A}".
+
+LSP-DB: Label Switched Path Database. A datastore that captures the state
+information of Label Switched Paths (LSPs) within a PCEP speaker.
+Not defined in the PCE Architecture, however this document uses the LSP-DB
+to illustrate how a PCEP speaker manages LSP-related information.
+
+PLSP-ID (Path LSP Identifier): Introduced in [RFC8231]. A unique identifier used in PCEP to
+distinguish a specific LSP between a PCC and a PCE which is constant for the lifetime of
+a PCEP session.
 
 # PCEP LSP Database
 
@@ -140,8 +149,8 @@ may modify the PCE LSP-DB.  The PCC LSP-DB is built from actual
 forwarding state that PCC has installed.  PCC uses PCRpt messages to
 synchronize its local LSP-DB to the PCE.
 
-The PCE MUST always act on the latest state of the PCE LSP DB.  Note
-that this does not mean that the PCE cannot use information from
+The PCE is intended to act on the latest state of the PCE LSP DB.  Note,
+this does not mean that the PCE cannot use information from
 outside of LSP-DB.  For example, the PCE can use other mechanisms to
 collect traffic statistics and use them in the computation.  However,
 these traffic statistics are not part of the LSP-DB, but only
@@ -425,8 +434,8 @@ removal flag.
 a PCE may signal to a PCC that it is congested, instructing that
 "no requests should be sent to that PCE until the overload state is cleared."
 
-In the case of an overloaded PCE, this document clarifies that it is RECOMMENDED
-a PCC send a PcReq to a backup PCE instead if the primary PCE is overloaded.
+In the case of an overloaded PCE, a PCC implementation could choose to wait for the PCE
+to no longer be overloaded or instead send a PcReq to a backup, non-overloaded PCE instead.
 
 [RFC8231] builds upon [RFC5440] by introducing the concept of a
 Stateful PCE, which allows delegation of LSP control to a single PCE.
@@ -436,13 +445,14 @@ or returned back to PCC by the PCE. The PCC may revoke delegation and re-assign
 it to another PCE.
 
 As a result, a PCE in an overload state still retains LSP delegation.
-For PCC-initiated LSPs, the PCC MAY revoke delegation from the overloaded
+For PCC-initiated LSPs, the PCC may revoke delegation from the overloaded
 PCE and maintain delegation for itself or delegate it to another PCE. For
 PCE-initiated LSPs, since the PCC cannot revoke delegation as per [RFC8281],
-the overloaded PCE MAY return the delegation to the PCC.
+the overloaded PCE may return the delegation to the PCC.
 
-This document clarifies that a PCC MUST continue to send PcRpt messages to a PCE in overload state otherwise
-the LSP-DB on PCE may go out of sync.
+The PCE will continue to send PcRpt messages to PCE even though it may indicate
+it is overloaded, otherwise the the LSP-DB on PCE may go out of sync.
+
 
 # Security Considerations
 
