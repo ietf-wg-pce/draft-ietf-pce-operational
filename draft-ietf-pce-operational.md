@@ -101,23 +101,21 @@ object could also include other optional TLVs based on the
 association types, that provides 'information' related to the
 association type.
 
-ERO:  Explicit Route Object is the path of the LSP encoded into a
-PCEP object.  To represent an empty ERO object, i.e., without any
-subobjects, we use the notation "ERO={}".  To represent an ERO
-object containing some given sequence of subobjects, we use the
-notation "ERO={A}".
+ERO: Explicit Route Object is the path of the LSP encoded into a PCEP object.
+In this document, an empty ERO object, i.e., without any subobjects,
+is represented with notation "ERO={}". An ERO object containing a given
+sequence of subobjects is represented as "ERO={A}".
 
 # PCEP LSP Database
 
-We use the concept of the LSP-DB, as a database of actual LSP state
-in the network, to illustrate the internal state of PCEP speakers in
+This document uses the concept of the LSP-DB, a database of actual LSP
+state in the network, to illustrate the internal state of PCEP speakers in
 response to various PCEP messages.
 
 Note that the term "LSP", which stands for "Label Switched Path", if
-taken too literally would restrict our discussion to MPLS dataplane
-only.  We take the term "LSP" to apply to non-MPLS paths as well, to
-avoid changing the name.  Alternatively, we could rename LSP to
-"Instance".
+taken too literally, would restrict the discussion to the MPLS dataplane
+only. In this document, the term "LSP" is applied to non-MPLS paths as well,
+to avoid renaming the term. Alternatively, the term "LSP" could be replaced with "Instance".
 
 ## Structure
 
@@ -125,15 +123,14 @@ LSP-DB contains two types of objects: LSPs and Tunnels.  An LSP is
 identified by the LSP-IDENTIFIERS TLV.  A Tunnel is identified by the
 PLSP-ID in the LSP object and/or the SYMBOLIC-NAME.  See [RFC8231].
 
-A Tunnel may or may not be an actual tunnel on the router.  For
+A Tunnel may or may not correspond to an actual tunnel on the router. For
 example, working and protect paths can be implemented as a single
-tunnel interface, but in PCEP we would refer to them as two different
-Tunnels, because they would have different PLSP-IDs.
+tunnel interface, but in PCEP, these are considered as two different
+Tunnels, because they have different PLSP-IDs.
 
-An LSP can be thought of as a instance of a Tunnel.  In steady-state,
-a Tunnel has only one LSP, but during make-before-break (see
-[RFC3209]) it can have multiple LSPs, to represent both new and old
-instances that exist simultaneously for a time.
+An LSP can be viewed as an instance of a Tunnel. In steady state,
+a Tunnel typically has only one LSP, but during make-before-break procedures (see [RFC3209]),
+multiple LSPs may exist simultaneously to represent both new and old instances.
 
 ## Synchronization
 
@@ -165,9 +162,9 @@ LSP DB.  After this, the PCC LSP-DB and PCE LSP-DB are in sync.
 
 ## Successful MBB
 
-Below we give an example of doing MBB to switch the Tunnel from one
-path to another.  We represent the path encoded into the ERO object
-as ERO={A} and ERO={B}.
+The following is an example of performing MBB to switch a Tunnel from one
+path to another. The path encoded into the ERO object
+is represented as ERO={A} and ERO={B}.
 
 PCC has an existing LSP in UP state, with LSP-ID=2.  PCC sends
 PCRpt(R-FLAG=0, PLSP-ID=100, LSP-ID=2, ERO={A}, OPER-FLAG=UP).
@@ -272,17 +269,15 @@ LSP-ID=3).
 PCEP Association is a group of zero or more LSPs.
 
 The PCE ASSO DB is populated by PCRpt messages and/or via
-configuration on the PCE itself.  An Association is identified by the
-Association Parameters.  The Association parameters contain many
-fields, so for convenience we will group all the fields into a single
-value.  We will use ASSO_PARAM=A, ASSO_PARAM=B, to refer to different
-PCEP Associations: A and B, respectively.
-
+configuration on the PCE itself. An Association is identified by the
+Association Parameters. As the Association Parameters contain many fields,
+all fields are grouped into a single value for convenience.
+The notation ASSO_PARAM=A and ASSO_PARAM=B is used to refer to
+different PCEP Associations: A and B, respectively.
 
 ## LSPs in same Association
 
-Below, we give an example to illustrate how LSPs join the same
-Association.
+The following example illustrates how LSPs join the same Association.
 
 PCC creates the first LSP.  PCC sends PCRpt(R-FLAG=0, PLSP-ID=100,
 LSP-ID=1, ASSO_PARAM=A, ASSO_R_FLAG=0).
@@ -360,7 +355,7 @@ ID=1, ASSO_PARAM=A, ASSO_R_FLAG=1).  The PCE ASSO DB is now empty.
 
 ## Switch Association during MBB
 
-Below, we give an example to illustrate how a Tunnel goes through MBB
+The following example illustrates how a Tunnel goes through MBB
 and switches from Association A to Association B.
 
 Each new LSP (identified by the LSP-ID) does not inherit the
