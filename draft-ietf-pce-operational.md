@@ -106,10 +106,18 @@ In this document, an empty ERO object, i.e., without any subobjects,
 is represented with notation "ERO={}". An ERO object containing a given
 sequence of subobjects is represented as "ERO={A}".
 
-LSP-DB: Label Switched Path Database. A datastore that captures the state
-information of Label Switched Paths (LSPs) within a PCEP speaker.
-Not defined in the PCE Architecture, however this document uses the LSP-DB
-to illustrate how a PCEP speaker manages LSP-related information.
+PCRPT-LSP-DB: PCEP Reported Label Switched Path Database. A logical datastore
+that captures the reported state information of Label Switched Paths (LSPs)
+within a PCEP speaker. This term is not defined in the PCE architecture;
+however, it is used in this document to describe how a PCEP speaker
+internally maintains LSP-related state information reported via PCRpt messages.
+
+EXTENDED-LSP-DB: Extended Label Switched Path Database. An implementation-specific
+logical datastore used to capture information related to a Label Switched Path.
+It may be keyed using the same identifiers as the PCRPT-LSP-DB. This term is not
+defined in the PCE architecture; however is used in this document to refer to a conceptual
+datastore that can include additional attributes—such as desired state,
+telemetry data, and other information not defined within IETF PCE working group documents.
 
 PLSP-ID (Path LSP Identifier): Introduced in [RFC8231]. A unique identifier used in PCEP to
 distinguish a specific LSP between a PCC and a PCE which is constant for the lifetime of
@@ -117,9 +125,9 @@ a PCEP session.
 
 # PCEP LSP Database
 
-This document uses the concept of the LSP-DB, a database of actual LSP
+This document uses the concept of the PCRPT-LSP-DB, a database of actual LSP
 state in the network, to illustrate the internal state of PCEP speakers in
-response to various PCEP messages.
+response to PcRpt messages.
 
 Note that the term "LSP", which stands for "Label Switched Path", if
 taken too literally, would restrict the discussion to the MPLS dataplane
@@ -128,11 +136,11 @@ to avoid renaming the term. Alternatively, the term "LSP" could be replaced with
 
 ## Structure
 
-The distinction between Tunnels and LSPs in the LSP-DB is essential for accurately
+The distinction between Tunnels and LSPs in the PCRPT-LSP-DB is essential for accurately
 modeling state information in PCEP, including procedures such as make-before-break,
 and for maintaining consistent state management across PCEP speakers.
 
-The LSP-DB contains two types of information: LSPs and Tunnels. An LSP is identified
+The PCRPT-LSP-DB contains two types of information: LSPs and Tunnels. An LSP is identified
 by the LSP-IDENTIFIERS TLV, while a Tunnel is identified by the PLSP-ID in the LSP
 object and/or the SYMBOLIC-NAME (see [RFC8231]).
 
@@ -142,39 +150,40 @@ tunnel interface, but in PCEP, these are represented as two different
 Tunnels with different PLSP-IDs.
 
 An LSP can be viewed as an instance of a Tunnel. In steady state,
-a Tunnel typically has a single LSP; however, during make-before-break procedures (see [RFC3209]),
-multiple LSPs may exist simultaneously to represent both the new and old instances during the transition.
+a Tunnel typically has a single LSP; however, during make-before-break
+procedures (see [RFC3209]), multiple LSPs may exist simultaneously to represent
+both the new and old instances during the transition.
 
 ## Synchronization
 
-Since the LSP-DB contains PCEP-specific information such as PLSP-IDs,
+Since the PCRPT-LSP-DB contains PCEP-specific information such as PLSP-IDs,
 which remain constant for the duration of a PCEP session, both the PCE and
-PCC maintain their own local copies of the LSP-DB.
-The PCE LSP-DB is only modified by PCRpt messages, no other PCEP message
-may modify the PCE LSP-DB.  The PCC LSP-DB is built from actual
+PCC maintain their own local copies of the PCRPT-LSP-DB.
+The PCE PCRPT-LSP-DB is only modified by PCRpt messages, no other PCEP message
+may modify the PCE PCRPT-LSP-DB.  The PCC PCRPT-LSP-DB is built from actual
 forwarding state that PCC has installed.  PCC uses PCRpt messages to
-synchronize its local LSP-DB to the PCE.
+synchronize its local PCRPT-LSP-DB to the PCE.
 
-The PCE is intended to act on the latest state of the PCE LSP DB.  Note,
-this does not mean that the PCE cannot use information from
-outside of LSP-DB.  For example, the PCE can use other mechanisms to
-collect traffic statistics and use them in the computation.  However,
-these traffic statistics are not part of the LSP-DB, but only
-reference it.
+The PCE is intended to act based on the most recent state available in the PCRPT-LSP-DB,
+which represents the actual state of Label Switched Paths (LSPs) in the network. This
+does not preclude the PCE from leveraging information obtained outside the PCRPT-LSP-DB.
+For example, implementation-specific mechanisms may be used to collect traffic statistics
+that can be considered during path computation. Such information is not part of the
+PCRPT-LSP-DB itself, but may reference it. Additional data such as desired state, telemetry,
+or operator-intended configurations—may be maintained in a separate, implementation-specific
+logical datastore referred to as the EXTENDED-LSP-DB.
 
-The LSP-DB on both the PCC and the PCE primarily stores the actual state
-in the network. An implementation may choose to store additional information such as desired state,
-however the LSP-DB still contains the live view of actual state and not infer the actual state
-is an immediate reflection of the desired state.
-For example, consider the case of PCE Initiated LSP, configured on the PCE.  When
-the operator modifies the configuration of this LSP, that is a change
-in desired state.  The actual state has not yet changed, so LSP-DB is
-not modified yet.  The LSP-DB is only modified after the PCE sends
-PCInit/PCUpd message to the PCC and the PCC decides to act on that
-message.  When the PCC acts on a message from a PCE, it would update
-its own PCC LSP DB and send a PCRpt to the PCE(s) to synchronize the
-change.  When the PCE receives the PCRpt msg, it updates its own PCE
-LSP DB.  After this, the PCC LSP-DB and PCE LSP-DB are in sync.
+Both the PCE and PCC maintain a PCRPT-LSP-DB that reflects the reported (actual) state of LSPs.
+Implementations may choose to store desired state information or other attributes in the
+EXTENDED-LSP-DB. It is important to note that the PCRPT-LSP-DB reflects only the live view
+of the network and does not imply alignment with the desired state.
+
+For example, in the case of a PCE-initiated LSP, a change in the LSP configuration made by
+an operator represents a modification to the desired state. However, the actual state does
+not change until the PCE sends a PCInit or PCUpd message to the PCC. Upon receipt of such a
+message, the PCC may act on the request, update its local PCRPT-LSP-DB, and generate a PCRpt
+message to inform the PCE of the change. The PCE then updates its own PCRPT-LSP-DB accordingly.
+Once this exchange is complete, the PCRPT-LSP-DBs on both the PCC and the PCE are synchronized.
 
 ## Make before Break (MBB)
 
@@ -208,7 +217,7 @@ Tunnel is delegated), or it could have been local computation on the
 PCC (if the Tunnel is locally computed on the PCC), or it could have
 been a change in configuration on the PCC (if the Tunnel's path is
 explicitly configured on the PCC).  It is important to emphasize that
-the procedure for updating the LSP-DB is common, regardless of the
+the procedure for updating the PCRPT-LSP-DB is common, regardless of the
 trigger that caused the change.
 
 PCC sends PCRpt(R-FLAG=0, PLSP-ID=100, LSP-ID=3, ERO={B}, OPER-
@@ -471,7 +480,7 @@ PCE-initiated LSPs, since the PCC cannot revoke delegation as per [RFC8281],
 the overloaded PCE may return the delegation to the PCC.
 
 The PCE will continue to send PcRpt messages to PCE even though it may indicate
-it is overloaded, otherwise the the LSP-DB on PCE may go out of sync.
+it is overloaded, otherwise the the PCRPT-LSP-DB on PCE may go out of sync.
 
 
 # Security Considerations
