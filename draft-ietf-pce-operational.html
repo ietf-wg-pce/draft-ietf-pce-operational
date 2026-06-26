@@ -13,25 +13,28 @@
 <meta content="Andrew Stone" name="author">
 <meta content="
        This document clarifies certain operational behavior aspects of
-the PCEP protocol.  The content of this document has been compiled
-based on several interop exercises. 
+the Path Computation Element Communication Protocol (PCEP). The
+content of this document has been compiled based on several interop
+exercises. This document does not make any updates or revisions to
+any PCEP specifications, instead it provides additional information
+to aid in the interpretation of those documents. 
     " name="description">
-<meta content="xml2rfc 3.29.0" name="generator">
+<meta content="xml2rfc 3.34.0" name="generator">
 <meta content="draft-ietf-pce-operational-latest" name="ietf.draft">
 <!-- Generator version information:
-  xml2rfc 3.29.0
-    Python 3.12.11
-    ConfigArgParse 1.7
+  xml2rfc 3.34.0
+    Python 3.14.5
+    ConfigArgParse 1.7.5
     google-i18n-address 3.1.1
-    intervaltree 3.1.0
+    intervaltree 3.2.1
     Jinja2 3.1.6
-    lxml 5.3.1
-    platformdirs 4.3.8
+    lxml 6.1.1
+    natsort 8.4.0
+    platformdirs 4.10.0
     pycountry 24.6.1
-    PyYAML 6.0.2
-    requests 2.32.4
-    setuptools 80.9.0
-    wcwidth 0.2.13
+    PyYAML 6.0.3
+    requests 2.33.1
+    wcwidth 0.8.1
 -->
 <link href="draft-ietf-pce-operational.xml" rel="alternate" type="application/rfc+xml">
 <link href="#copyright" rel="license">
@@ -172,7 +175,7 @@ based on several interop exercises.
   font-weight: 400;
   font-display: swap;
   src: local('Oxygen Mono'), local('OxygenMono-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/oxygenmono-regular-latin-ext.woff2') format('woff2');
-  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 @font-face {
   font-family: 'Oxygen Mono';
@@ -180,7 +183,8 @@ based on several interop exercises.
   font-weight: 400;
   font-display: swap;
   src: local('Oxygen Mono'), local('OxygenMono-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/oxygenmono-regular-latin.woff2') format('woff2');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
 }
 
 @font-face {
@@ -297,16 +301,19 @@ h1, h2, h3, h4, h5, h6 {
   font-size-adjust: 0.5;
   color: var(--title-color);
 }
-h1#title {
-  font-size: 32px;
-  line-height: 40px;
-  clear: both;
-}
-h1#title, h1#rfcnum {
-  margin: 1.5em 0 0.2em;
-}
-h1#rfcnum + h1#title {
-  margin: 0.2em 0;
+h1 {
+  &#title {
+    font-size: 32px;
+    line-height: 40px;
+    clear: both;
+    margin: 1.5em 0 0.2em;
+  }
+  &#rfcnum {
+    margin: 1.5em 0 0.2em;
+    & + h1#title {
+      margin: 0.2em 0;
+    }
+  }
 }
 
 h1, h2, h3 {
@@ -326,10 +333,10 @@ h4, h5, h6 {
 #abstract+p {
   font-size: 18px;
   line-height: 24px;
-}
-#abstract+p code, #abstract+p samp, #abstract+p tt {
-  font-size: 16px;
-  line-height: 0;
+  & code, & samp, & tt {
+    font-size: 16px;
+    line-height: 0;
+  }
 }
 
 p {
@@ -340,59 +347,59 @@ p {
 div {
   margin: 0;
 }
-.alignRight.art-text {
-  background-color: var(--highlight-color);
-  border: 1px solid var(--line-color);
-  border-radius: 3px;
-  padding: 0.5em 1em 0;
-  margin-bottom: 0.5em;
-}
-.alignRight.art-text pre {
-  padding: 0;
-  width: auto;
-}
 .alignRight {
   margin: 1em 0;
-}
-.alignRight > *:first-child {
-  border: none;
-  margin: 0;
-  float: right;
-  clear: both;
-}
-.alignRight > *:nth-child(2) {
-  clear: both;
-  display: block;
-  border: none;
+  &.art-text {
+    background-color: var(--highlight-color);
+    border: 1px solid var(--line-color);
+    border-radius: 3px;
+    padding: 0.5em 1em 0;
+    margin-bottom: 0.5em;
+    & pre {
+      padding: 0;
+      width: auto;
+    }
+  }
+  & > *:first-child {
+    border: none;
+    margin: 0;
+    float: right;
+    clear: both;
+  }
+  & > *:nth-child(2) {
+    clear: both;
+    display: block;
+    border: none;
+  }
 }
 svg {
   display: block;
-}
-/* font-family isn't space-separated, but =~ will have to do */
-svg[font-family~="monospace" i], svg [font-family~="monospace" i] {
-  font-family: var(--font-mono);
-}
-.alignCenter.art-text {
-  background-color: var(--highlight-color);
-  border: 1px solid var(--line-color);
-  border-radius: 3px;
-  padding: 0.5em 1em 0;
-  margin-bottom: 0.5em;
-}
-.alignCenter.art-text pre {
-  padding: 0;
-  width: auto;
+  /* font-family isn't space-separated, but =~ will have to do */
+  &[font-family~="monospace" i], & [font-family~="monospace" i] {
+    font-family: var(--font-mono);
+  }
 }
 .alignCenter {
   margin: 1em 0;
-}
-.alignCenter > *:first-child {
-  border: none;
-  /* this isn't optimal, but it's an existence proof.  PrinceXML doesn't
-     support flexbox yet.
-  */
-  display: table;
-  margin: 0 auto;
+  &.art-text {
+    background-color: var(--highlight-color);
+    border: 1px solid var(--line-color);
+    border-radius: 3px;
+    padding: 0.5em 1em 0;
+    margin-bottom: 0.5em;
+    & pre {
+      padding: 0;
+      width: auto;
+    }
+  }
+  & > *:first-child {
+    border: none;
+    /* this isn't optimal, but it's an existence proof.  PrinceXML doesn't
+       support flexbox yet.
+    */
+    display: table;
+    margin: 0 auto;
+  }
 }
 
 /* lists */
@@ -430,26 +437,25 @@ dl {
     --indent: 5ch;
     & > dt {
       min-width: calc(var(--indent) - 2ch);
+      float: none;
     }
-  }
-  &.olPercent > dt {
-    float: none;
   }
 
   dl > dd > & {
     margin-top: 0.5em;
     margin-bottom: 0;
   }
-}
-dl:not(.dlNewline) > dt {
-  float: left;
-  margin-right: 2ch;
-  min-width: 8ch;
-}
-dl > dd {
-  margin-bottom: .8em;
-  margin-left: var(--indent) !important; /* stupid element overrides */
-  min-height: 2ex;
+
+  &:not(.dlNewline) > dt {
+    float: left;
+    margin-right: 2ch;
+    min-width: 8ch;
+  }
+  & > dd {
+    margin-bottom: .8em;
+    margin-left: var(--indent) !important; /* stupid element overrides */
+    min-height: 2ex;
+  }
 }
 :is(dl.compact, .dlCompact) > dd {
   margin-bottom: 0;
@@ -465,20 +471,22 @@ dl > dd {
 }
 
 /* links */
-a, a[href].selfRef:hover {
+a {
   text-decoration: none;
+  &[href] {
+    color: var(--link-color);
+    &:hover { text-decoration: underline; }
+    &.selfRef {
+      color: var(--text-color);
+      &:hover {
+        text-decoration: none;
+        background-color: var(--highlight-color);
+      }
+    }
+  }
 }
-a[href] {
-  color: var(--link-color);
-}
-a[href].selfRef, .iref + a[href].internal {
+.iref + a[href].internal {
   color: var(--text-color);
-}
-a[href]:hover {
-  text-decoration: underline;
-}
-a[href].selfRef:hover {
-  background-color: var(--highlight-color);
 }
 a.xref:is(.cite, .auto), :is(#status-of-memo, #copyright) a {
   white-space: nowrap;
@@ -514,9 +522,9 @@ img {
 figure {
   margin: 0.5em 0;
   padding: 0;
-}
-figure blockquote {
-  margin: 0.8em 0.4em 0.4em;
+  & blockquote {
+    margin: 0.8em 0.4em 0.4em;
+  }
 }
 figcaption, caption {
   font-style: italic;
@@ -526,17 +534,19 @@ figcaption, caption {
 }
 @media screen {
   /* Auto-collapse boilerplate. */
-  :is(#status-of-memo, #copyright) p {
-    margin: -2px 0;
-    max-height: 0;
-    transition: max-height 2s ease, margin 0.5s ease 0.5s;
-    overflow: hidden;
-  }
-  :is(#status-of-memo, #copyright):hover p,
-  :is(#status-of-memo, #copyright) h2:target ~ p {
-    margin: 0.5em 0;
-    max-height: 500px;
-    overflow: auto;
+  :is(#status-of-memo, #copyright) {
+    & p {
+      margin: -2px 0;
+      max-height: 0;
+      transition: max-height 2s ease, margin 0.5s ease 0.5s;
+      overflow: hidden;
+    }
+    &:hover p,
+    & h2:target ~ p {
+      margin: 0.5em 0;
+      max-height: 500px;
+      overflow: auto;
+    }
   }
   pre, svg {
     display: inline-block;
@@ -572,6 +582,7 @@ aside, blockquote {
 }
 blockquote {
   margin: 1em 0;
+  border-left: 2px var(--pilcrow-strong) solid;
 }
 cite {
   display: block;
@@ -585,25 +596,17 @@ table {
   max-width: 100%;
   margin: 0 0 1em;
   border-collapse: collapse;
-}
-table.right {
-  margin-left: auto;
-}
-table.center {
-  margin-left: auto;
-  margin-right: auto;
-}
-table.left {
-  margin-right: auto;
-}
-table .text-left {
-  text-align: left;
-}
-table .text-center {
-  text-align: center;
-}
-table .text-right {
-  text-align: right;
+  &.right { margin-left: auto; }
+  &.center { margin-left: auto; margin-right: auto; }
+  &.left { margin-right: auto; }
+  & .text-left { text-align: left; }
+  & .text-center { text-align: center; }
+  & .text-right { text-align: right; }
+  & caption {
+    margin: 0;
+    padding: 3px 0 3px 1em;
+  }
+  & p { margin: 0; }
 }
 
 thead, tbody {
@@ -623,13 +626,6 @@ th {
 :is(tr:nth-child(2n+1), thead+tbody > tr:nth-child(2n)) > td {
   background-color: var(--highlight-color);
 }
-table caption {
-  margin: 0;
-  padding: 3px 0 3px 1em;
-}
-table p {
-  margin: 0;
-}
 
 /* pilcrow */
 a.pilcrow {
@@ -640,18 +636,16 @@ a.pilcrow {
     color: var(--pilcrow-weak);
     &:hover { text-decoration: none; }
   }
-}
-@media not print {
-  :hover > a.pilcrow {
-    opacity: 1;
+  @media not print {
+    :hover > &, &:focus {
+      opacity: 1;
+    }
+    &[href]:hover {
+      color: var(--pilcrow-strong);
+      background-color: transparent;
+    }
   }
-  a.pilcrow[href]:hover {
-    color: var(--pilcrow-strong);
-    background-color: transparent;
-  }
-}
-@media print {
-  a.pilcrow {
+  @media print {
     display: none;
   }
 }
@@ -710,9 +704,9 @@ sub, sup {
   font-size: 0.9em;
   font-style: italic;
   margin-top: 2em;
-}
-.docInfo .prepared {
-  float: right;
+  & .prepared {
+    float: right;
+  }
 }
 
 /* table of contents */
@@ -802,23 +796,27 @@ hr.addr {
   max-width: calc(100% - 16px);
 }
 @media (min-width: 500px) {
-  #authors-addresses > section {
-    column-count: 2;
-    column-gap: 20px;
-  }
-  #authors-addresses > section > h2 {
-    column-span: all;
-  }
-  /* hack for break-inside: avoid-column */
-  #authors-addresses address {
-    display: inline-block;
-    break-inside: avoid-column;
+  #authors-addresses {
+    & > section {
+      column-count: 2;
+      column-gap: 20px;
+    }
+    & > section > h2 {
+      column-span: all;
+    }
+    /* hack for break-inside: avoid-column */
+    & address {
+      display: inline-block;
+      break-inside: avoid-column;
+    }
   }
 }
 
 /* Comments */
-.rfcEditorRemove p:first-of-type {
-  font-style: italic;
+.rfcEditorRemove {
+  & p:first-of-type {
+    font-style: italic;
+  }
 }
 .cref {
   background-color: rgba(249, 232, 105, 0.3);
@@ -829,19 +827,21 @@ hr.addr {
 }
 
 @media screen {
-  #toc nav {
-    font-family: var(--font-title);
-    font-weight: 360;
-    & > ul { margin-bottom: 2em; }
-    & ul {
-      margin: 0 0 0 4px;
-      & :is(p, li) {
-        margin: 2px 0;
+  #toc {
+    & nav {
+      font-family: var(--font-title);
+      font-weight: 360;
+      & > ul { margin-bottom: 2em; }
+      & ul {
+        margin: 0 0 0 4px;
+        & :is(p, li) {
+          margin: 2px 0;
+        }
       }
     }
-  }
-  #toc a.toplink {
-    float: right;
+    & a.toplink {
+      float: right;
+    }
   }
 }
 @media not screen {
@@ -862,54 +862,54 @@ hr.addr {
     margin: 0;
     border-bottom: 1px solid #ccc;
     opacity: 0.6;
-  }
-  #toc h2 {
-    margin: 0;
-    padding: 2px 0 2px 6px;
-    padding-right: 1em;
-    font-size: 18px;
-    line-height: 24px;
-    min-width: 190px;
-    text-align: right;
-    background-color: #444;
-    color: white;
-    cursor: pointer;
-    &::before { /* css hamburger */
-      float: right;
-      position: relative;
-      width: 1em;
-      height: 1px;
-      left: -164px;
-      margin: 8px 0 0 0;
-      background: white none repeat scroll 0 0;
-      box-shadow: 0 4px 0 0 white, 0 8px 0 0 white;
-      content: "";
+    & h2 {
+      margin: 0;
+      padding: 2px 0 2px 6px;
+      padding-right: 1em;
+      font-size: 18px;
+      line-height: 24px;
+      min-width: 190px;
+      text-align: right;
+      background-color: #444;
+      color: white;
+      cursor: pointer;
+      &::before { /* css hamburger */
+        float: right;
+        position: relative;
+        width: 1em;
+        height: 1px;
+        left: -164px;
+        margin: 8px 0 0 0;
+        background: white none repeat scroll 0 0;
+        box-shadow: 0 4px 0 0 white, 0 8px 0 0 white;
+        content: "";
+      }
     }
-  }
-  #toc nav {
-    display: none;
-    background-color: var(--background-color);
-    padding: 0.5em 1em 1em;
-    overflow: auto;
-    overscroll-behavior: contain;
-    height: calc(100vh - 48px);
-    border-left: 1px solid #ddd;
-  }
-  #toc.active {
-    opacity: 1;
-    & nav { display: block; }
-  }
-  /* Make the collapsed ToC header render white on gray also when it's a link */
-  #toc h2 a,
-  #toc h2 a:is(:link, :focus, :hover),
-  #toc a.toplink,
-  #toc a.toplink:hover {
-    color: white;
-    background-color: #444;
-    text-decoration: none;
-  }
-  #toc a.toplink {
-    margin: 2px 0.5em 0;
+    & nav {
+      display: none;
+      background-color: var(--background-color);
+      padding: 0.5em 1em 1em;
+      overflow: auto;
+      overscroll-behavior: contain;
+      height: calc(100vh - 48px);
+      border-left: 1px solid #ddd;
+    }
+    &.active {
+      opacity: 1;
+      & nav { display: block; }
+    }
+    /* Make the collapsed ToC header render white on gray also when it's a link */
+    & h2 a,
+    & h2 a:is(:link, :focus, :hover),
+    & a.toplink,
+    & a.toplink:hover {
+      color: white;
+      background-color: #444;
+      text-decoration: none;
+    }
+    & a.toplink {
+      margin: 2px 0.5em 0;
+    }
   }
 }
 
@@ -928,26 +928,26 @@ hr.addr {
     margin: 0;
     padding: 0;
     z-index: 1;
-  }
-  #toc h2 {
-    margin: 0;
-    padding: 0.25em 1em 1em 0;
-  }
-  #toc nav {
-    display: block;
-    height: calc(90vh - 84px);
-    bottom: 0;
-    padding: 0.5em 0 2em;
-    overflow: auto;
-    overscroll-behavior: contain;
-    scrollbar-width: thin;
+    & h2 {
+      margin: 0;
+      padding: 0.25em 1em 1em 0;
+    }
+    & nav {
+      display: block;
+      height: calc(90vh - 84px);
+      bottom: 0;
+      padding: 0.5em 0 2em;
+      overflow: auto;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+    }
+    & a.toplink {
+      margin: 8px 0.5em 0;
+    }
   }
   img { /* future proofing */
     max-width: 100%;
     height: auto;
-  }
-  #toc a.toplink {
-    margin: 8px 0.5em 0;
   }
 }
 
@@ -963,12 +963,13 @@ hr.addr {
   #n-copyright-notice {
     border-bottom: none;
   }
-  #toc, #n-introduction {
-    page-break-before: always;
-  }
   #toc {
+    page-break-before: always;
     border-top: none;
     padding-top: 0;
+  }
+  #n-introduction {
+    page-break-before: always;
   }
   figure, pre, .vcard {
     page-break-inside: avoid;
@@ -1030,17 +1031,19 @@ hr.addr {
 }
 
 /* SVG Trick: a prefix match works because only black and white are allowed */
-svg :is([stroke="black"], [stroke^="#000"]) {
-  stroke: var(--text-color);
-}
-svg :is([stroke="white"], [stroke^="#fff"]) {
-  stroke: var(--background-color);
-}
-svg :is([fill="black"], [fill^="#000"], :not([fill])) {
-  fill: var(--text-color);
-}
-svg :is([fill="white"], [fill^="#fff"]) {
-  fill: var(--background-color);
+svg {
+  & :is([stroke="black"], [stroke^="#000"]) {
+    stroke: var(--text-color);
+  }
+  & :is([stroke="white"], [stroke^="#fff"]) {
+    stroke: var(--background-color);
+  }
+  & :is([fill="black"], [fill^="#000"], :not([fill])) {
+    fill: var(--text-color);
+  }
+  & :is([fill="white"], [fill^="#fff"]) {
+    fill: var(--background-color);
+  }
 }
 </style>
 
@@ -1050,11 +1053,11 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <thead><tr>
 <td class="left">Internet-Draft</td>
 <td class="center">PCEP-OPERATIONAL</td>
-<td class="right">June 2025</td>
+<td class="right">June 2026</td>
 </tr></thead>
 <tfoot><tr>
 <td class="left">Koldychev, et al.</td>
-<td class="center">Expires 24 December 2025</td>
+<td class="center">Expires 28 December 2026</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
 </table>
@@ -1067,12 +1070,12 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <dd class="internet-draft">draft-ietf-pce-operational-latest</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2025-06-22" class="published">22 June 2025</time>
+<time datetime="2026-06-26" class="published">26 June 2026</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
 <dd class="intended-status">Informational</dd>
 <dt class="label-expires">Expires:</dt>
-<dd class="expires"><time datetime="2025-12-24">24 December 2025</time></dd>
+<dd class="expires"><time datetime="2026-12-28">28 December 2026</time></dd>
 <dt class="label-authors">Authors:</dt>
 <dd class="authors">
 <div class="author">
@@ -1106,8 +1109,11 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <section id="section-abstract">
       <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
 <p id="section-abstract-1">This document clarifies certain operational behavior aspects of
-the PCEP protocol.  The content of this document has been compiled
-based on several interop exercises.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
+the Path Computation Element Communication Protocol (PCEP). The
+content of this document has been compiled based on several interop
+exercises. This document does not make any updates or revisions to
+any PCEP specifications, instead it provides additional information
+to aid in the interpretation of those documents.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
 </section>
 <section class="note rfcEditorRemove" id="section-note.1">
       <h2 id="name-discussion-venues">
@@ -1139,7 +1145,7 @@ based on several interop exercises.<a href="#section-abstract-1" class="pilcrow"
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 24 December 2025.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 28 December 2026.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -1148,7 +1154,7 @@ based on several interop exercises.<a href="#section-abstract-1" class="pilcrow"
 <a href="#name-copyright-notice" class="section-name selfRef">Copyright Notice</a>
         </h2>
 <p id="section-boilerplate.2-1">
-            Copyright (c) 2025 IETF Trust and the persons identified as the
+            Copyright (c) 2026 IETF Trust and the persons identified as the
             document authors. All rights reserved.<a href="#section-boilerplate.2-1" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.2-2">
             This document is subject to BCP 78 and the IETF Trust's Legal
@@ -1172,70 +1178,72 @@ based on several interop exercises.<a href="#section-abstract-1" class="pilcrow"
             <p id="section-toc.1-1.1.1" class="keepWithNext"><a href="#section-1" class="auto internal xref">1</a>.  <a href="#name-introduction" class="internal xref">Introduction</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2">
-            <p id="section-toc.1-1.2.1" class="keepWithNext"><a href="#section-2" class="auto internal xref">2</a>.  <a href="#name-requirements-language" class="internal xref">Requirements Language</a></p>
+            <p id="section-toc.1-1.2.1" class="keepWithNext"><a href="#section-2" class="auto internal xref">2</a>.  <a href="#name-terminology" class="internal xref">Terminology</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3">
-            <p id="section-toc.1-1.3.1" class="keepWithNext"><a href="#section-3" class="auto internal xref">3</a>.  <a href="#name-terminology" class="internal xref">Terminology</a></p>
-</li>
-          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4">
-            <p id="section-toc.1-1.4.1"><a href="#section-4" class="auto internal xref">4</a>.  <a href="#name-pcep-lsp-database" class="internal xref">PCEP LSP Database</a></p>
+            <p id="section-toc.1-1.3.1"><a href="#section-3" class="auto internal xref">3</a>.  <a href="#name-pcep-lsp-database" class="internal xref">PCEP LSP Database</a></p>
 <ul class="compact toc ulBare ulEmpty">
-<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.1">
-                <p id="section-toc.1-1.4.2.1.1"><a href="#section-4.1" class="auto internal xref">4.1</a>.  <a href="#name-structure" class="internal xref">Structure</a></p>
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.1">
+                <p id="section-toc.1-1.3.2.1.1" class="keepWithNext"><a href="#section-3.1" class="auto internal xref">3.1</a>.  <a href="#name-structure" class="internal xref">Structure</a></p>
 </li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.2">
-                <p id="section-toc.1-1.4.2.2.1"><a href="#section-4.2" class="auto internal xref">4.2</a>.  <a href="#name-synchronization" class="internal xref">Synchronization</a></p>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.2">
+                <p id="section-toc.1-1.3.2.2.1"><a href="#section-3.2" class="auto internal xref">3.2</a>.  <a href="#name-synchronization" class="internal xref">Synchronization</a></p>
 </li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.3">
-                <p id="section-toc.1-1.4.2.3.1"><a href="#section-4.3" class="auto internal xref">4.3</a>.  <a href="#name-make-before-break-mbb" class="internal xref">Make before Break (MBB)</a></p>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.3">
+                <p id="section-toc.1-1.3.2.3.1"><a href="#section-3.3" class="auto internal xref">3.3</a>.  <a href="#name-make-before-break-mbb" class="internal xref">Make before Break (MBB)</a></p>
 <ul class="compact toc ulBare ulEmpty">
-<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.3.2.1">
-                    <p id="section-toc.1-1.4.2.3.2.1.1"><a href="#section-4.3.1" class="auto internal xref">4.3.1</a>.  <a href="#name-successful-mbb" class="internal xref">Successful MBB</a></p>
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.3.2.1">
+                    <p id="section-toc.1-1.3.2.3.2.1.1"><a href="#section-3.3.1" class="auto internal xref">3.3.1</a>.  <a href="#name-successful-mbb" class="internal xref">Successful MBB</a></p>
 </li>
-                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.3.2.2">
-                    <p id="section-toc.1-1.4.2.3.2.2.1"><a href="#section-4.3.2" class="auto internal xref">4.3.2</a>.  <a href="#name-aborted-mbb" class="internal xref">Aborted MBB</a></p>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.3.2.2">
+                    <p id="section-toc.1-1.3.2.3.2.2.1"><a href="#section-3.3.2" class="auto internal xref">3.3.2</a>.  <a href="#name-aborted-mbb" class="internal xref">Aborted MBB</a></p>
 </li>
                 </ul>
 </li>
             </ul>
 </li>
-          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5">
-            <p id="section-toc.1-1.5.1"><a href="#section-5" class="auto internal xref">5</a>.  <a href="#name-pcep-association-database" class="internal xref">PCEP Association Database</a></p>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4">
+            <p id="section-toc.1-1.4.1"><a href="#section-4" class="auto internal xref">4</a>.  <a href="#name-pcep-association-database" class="internal xref">PCEP Association Database</a></p>
 <ul class="compact toc ulBare ulEmpty">
-<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.1">
-                <p id="section-toc.1-1.5.2.1.1"><a href="#section-5.1" class="auto internal xref">5.1</a>.  <a href="#name-lsps-in-same-association" class="internal xref">LSPs in same Association</a></p>
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.1">
+                <p id="section-toc.1-1.4.2.1.1"><a href="#section-4.1" class="auto internal xref">4.1</a>.  <a href="#name-lsps-in-same-association" class="internal xref">LSPs in same Association</a></p>
 </li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.2">
-                <p id="section-toc.1-1.5.2.2.1"><a href="#section-5.2" class="auto internal xref">5.2</a>.  <a href="#name-switch-association-during-m" class="internal xref">Switch Association during MBB</a></p>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.2">
+                <p id="section-toc.1-1.4.2.2.1"><a href="#section-4.2" class="auto internal xref">4.2</a>.  <a href="#name-switch-association-during-m" class="internal xref">Switch Association during MBB</a></p>
 </li>
             </ul>
 </li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5">
+            <p id="section-toc.1-1.5.1"><a href="#section-5" class="auto internal xref">5</a>.  <a href="#name-computation-constraints" class="internal xref">Computation Constraints</a></p>
+</li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6">
-            <p id="section-toc.1-1.6.1"><a href="#section-6" class="auto internal xref">6</a>.  <a href="#name-computation-constraints" class="internal xref">Computation Constraints</a></p>
+            <p id="section-toc.1-1.6.1"><a href="#section-6" class="auto internal xref">6</a>.  <a href="#name-overloaded-pce" class="internal xref">Overloaded PCE</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.1">
+                <p id="section-toc.1-1.6.2.1.1"><a href="#section-6.1" class="auto internal xref">6.1</a>.  <a href="#name-reports-toward-an-overloade" class="internal xref">Reports toward an Overloaded PCE</a></p>
+</li>
+            </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7">
-            <p id="section-toc.1-1.7.1"><a href="#section-7" class="auto internal xref">7</a>.  <a href="#name-overloaded-pce" class="internal xref">Overloaded PCE</a></p>
+            <p id="section-toc.1-1.7.1"><a href="#section-7" class="auto internal xref">7</a>.  <a href="#name-security-considerations" class="internal xref">Security Considerations</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8">
-            <p id="section-toc.1-1.8.1"><a href="#section-8" class="auto internal xref">8</a>.  <a href="#name-security-considerations" class="internal xref">Security Considerations</a></p>
+            <p id="section-toc.1-1.8.1"><a href="#section-8" class="auto internal xref">8</a>.  <a href="#name-manageability-consideration" class="internal xref">Manageability Considerations</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9">
-            <p id="section-toc.1-1.9.1"><a href="#section-9" class="auto internal xref">9</a>.  <a href="#name-managability-considerations" class="internal xref">Managability Considerations</a></p>
+            <p id="section-toc.1-1.9.1"><a href="#section-9" class="auto internal xref">9</a>.  <a href="#name-iana-considerations" class="internal xref">IANA Considerations</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10">
-            <p id="section-toc.1-1.10.1"><a href="#section-10" class="auto internal xref">10</a>. <a href="#name-iana-considerations" class="internal xref">IANA Considerations</a></p>
+            <p id="section-toc.1-1.10.1"><a href="#section-10" class="auto internal xref">10</a>. <a href="#name-normative-references" class="internal xref">Normative References</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11">
-            <p id="section-toc.1-1.11.1"><a href="#section-11" class="auto internal xref">11</a>. <a href="#name-normative-references" class="internal xref">Normative References</a></p>
+            <p id="section-toc.1-1.11.1"><a href="#appendix-A" class="auto internal xref"></a><a href="#name-acknowledgments" class="internal xref">Acknowledgments</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12">
-            <p id="section-toc.1-1.12.1"><a href="#appendix-A" class="auto internal xref"></a><a href="#name-acknowledgments" class="internal xref">Acknowledgments</a></p>
+            <p id="section-toc.1-1.12.1"><a href="#appendix-B" class="auto internal xref"></a><a href="#name-contributors" class="internal xref">Contributors</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13">
-            <p id="section-toc.1-1.13.1"><a href="#appendix-B" class="auto internal xref"></a><a href="#name-contributors" class="internal xref">Contributors</a></p>
-</li>
-          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.14">
-            <p id="section-toc.1-1.14.1"><a href="#appendix-C" class="auto internal xref"></a><a href="#name-authors-addresses" class="internal xref">Authors' Addresses</a></p>
+            <p id="section-toc.1-1.13.1"><a href="#appendix-C" class="auto internal xref"></a><a href="#name-authors-addresses" class="internal xref">Authors' Addresses</a></p>
 </li>
         </ul>
 </nav>
@@ -1246,156 +1254,180 @@ based on several interop exercises.<a href="#section-abstract-1" class="pilcrow"
       <h2 id="name-introduction">
 <a href="#section-1" class="section-number selfRef">1. </a><a href="#name-introduction" class="section-name selfRef">Introduction</a>
       </h2>
-<p id="section-1-1">Due to different interpretations of PCEP standards, it was found that
-implementations often had to adjust their behavior in order to
-interoperate.  The current document serves to clarify certain aspects
-of PCEP to make it easier to produce interoperable implementations of
-PCEP.<a href="#section-1-1" class="pilcrow">¶</a></p>
-</section>
-</div>
-<div id="requirements-language">
-<section id="section-2">
-      <h2 id="name-requirements-language">
-<a href="#section-2" class="section-number selfRef">2. </a><a href="#name-requirements-language" class="section-name selfRef">Requirements Language</a>
-      </h2>
-<p id="section-2-1">The key words "<span class="bcp14">MUST</span>", "<span class="bcp14">MUST NOT</span>", "<span class="bcp14">REQUIRED</span>", "<span class="bcp14">SHALL</span>", "<span class="bcp14">SHALL NOT</span>", "<span class="bcp14">SHOULD</span>", "<span class="bcp14">SHOULD NOT</span>", "<span class="bcp14">RECOMMENDED</span>", "<span class="bcp14">NOT RECOMMENDED</span>",
-"<span class="bcp14">MAY</span>", and "<span class="bcp14">OPTIONAL</span>" in this document are to be interpreted as
-described in BCP 14 <span>[<a href="#RFC2119" class="cite xref">RFC2119</a>]</span> <span>[<a href="#RFC8174" class="cite xref">RFC8174</a>]</span> when, and only when, they
-appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶</a></p>
+<p id="section-1-1">Due to different interpretations of the PCEP standards
+<span>[<a href="#RFC5440" class="cite xref">RFC5440</a>]</span>, <span>[<a href="#RFC8231" class="cite xref">RFC8231</a>]</span>, <span>[<a href="#RFC8281" class="cite xref">RFC8281</a>]</span>, <span>[<a href="#RFC8697" class="cite xref">RFC8697</a>]</span>, and <span>[<a href="#RFC3209" class="cite xref">RFC3209</a>]</span>, it was
+found that implementations often had to adjust their behavior in
+order to interoperate. The current document serves to clarify
+certain aspects of PCEP to make it easier to produce interoperable
+implementations of PCEP.<a href="#section-1-1" class="pilcrow">¶</a></p>
+<p id="section-1-2">This document does not make any updates or revisions to any PCEP
+specifications. It provides additional informational guidance to aid
+in the consistent interpretation of those documents across
+implementations.<a href="#section-1-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="terminology">
-<section id="section-3">
+<section id="section-2">
       <h2 id="name-terminology">
-<a href="#section-3" class="section-number selfRef">3. </a><a href="#name-terminology" class="section-name selfRef">Terminology</a>
+<a href="#section-2" class="section-number selfRef">2. </a><a href="#name-terminology" class="section-name selfRef">Terminology</a>
       </h2>
-<p id="section-3-1">The following terminologies are used in this document:<a href="#section-3-1" class="pilcrow">¶</a></p>
-<p id="section-3-2">PCC:  Path Computation Client.  Any client application requesting a
-path computation to be performed by a Path Computation Element.<a href="#section-3-2" class="pilcrow">¶</a></p>
-<p id="section-3-3">PCE:  Path Computation Element.  An entity (component, application,
-or network node) that is capable of computing a network path or
-route based on a network graph and applying computational
-constraints.<a href="#section-3-3" class="pilcrow">¶</a></p>
-<p id="section-3-4">PCEP:  Path Computation Element Protocol.<a href="#section-3-4" class="pilcrow">¶</a></p>
-<p id="section-3-5">MBB:  Make-Before-Break.  A procedure during which the head-end of a
+<p id="section-2-1">The following terminology is used in this document:<a href="#section-2-1" class="pilcrow">¶</a></p>
+<p id="section-2-2">PCC:  Path Computation Client <span>[<a href="#RFC4655" class="cite xref">RFC4655</a>]</span>.<a href="#section-2-2" class="pilcrow">¶</a></p>
+<p id="section-2-3">PCE:  Path Computation Element <span>[<a href="#RFC4655" class="cite xref">RFC4655</a>]</span>.<a href="#section-2-3" class="pilcrow">¶</a></p>
+<p id="section-2-4">PCEP:  Path Computation Element Communication Protocol <span>[<a href="#RFC5440" class="cite xref">RFC5440</a>]</span>.<a href="#section-2-4" class="pilcrow">¶</a></p>
+<p id="section-2-5">MBB:  Make-Before-Break.  A procedure during which the head-end of a
 traffic-engineered path wishes to move traffic to a new path
 without losing any traffic, by first "making" a new path and then
-"breaking" the old path.<a href="#section-3-5" class="pilcrow">¶</a></p>
-<p id="section-3-6">Association parameters:  As described in <span>[<a href="#RFC8697" class="cite xref">RFC8697</a>]</span>, the combination
+"breaking" the old path (see <span>[<a href="#RFC3209" class="cite xref">RFC3209</a>]</span>).<a href="#section-2-5" class="pilcrow">¶</a></p>
+<p id="section-2-6">Association parameters:  As described in <span>[<a href="#RFC8697" class="cite xref">RFC8697</a>]</span>, the combination
 of the mandatory fields Association type, Association ID and
 Association Source in the ASSOCIATION object uniquely identify the
 association group.  If the optional TLVs - Global Association
 Source or Extended Association ID are included, then they are
 included in combination with mandatory fields to uniquely identify
-the association group.<a href="#section-3-6" class="pilcrow">¶</a></p>
-<p id="section-3-7">Association information:  As described in <span>[<a href="#RFC8697" class="cite xref">RFC8697</a>]</span>, the ASSOCIATION
+the association group.<a href="#section-2-6" class="pilcrow">¶</a></p>
+<p id="section-2-7">Association information:  As described in <span>[<a href="#RFC8697" class="cite xref">RFC8697</a>]</span>, the ASSOCIATION
 object could also include other optional TLVs based on the
 association types, that provides 'information' related to the
-association type.<a href="#section-3-7" class="pilcrow">¶</a></p>
-<p id="section-3-8">ERO: Explicit Route Object is the path of the LSP encoded into a PCEP object.
-In this document, an empty ERO object, i.e., without any subobjects,
-is represented with notation "ERO={}". An ERO object containing a given
-sequence of subobjects is represented as "ERO={A}".<a href="#section-3-8" class="pilcrow">¶</a></p>
-<p id="section-3-9">PCRPT-LSP-DB: PCEP Reported Label Switched Path Database. A logical datastore
-that captures the reported state information of Label Switched Paths (LSPs)
-within a PCEP speaker. This term is not defined in the PCE architecture;
-however, it is used in this document to describe how a PCEP speaker
-internally maintains LSP-related state information reported via PCRpt messages.<a href="#section-3-9" class="pilcrow">¶</a></p>
-<p id="section-3-10">EXTENDED-LSP-DB: Extended Label Switched Path Database. An implementation-specific
-logical datastore used to capture information related to a Label Switched Path.
-It may be keyed using the same identifiers as the PCRPT-LSP-DB. This term is not
-defined in the PCE architecture; however is used in this document to refer to a conceptual
-datastore that can include additional attributes—such as desired state,
-telemetry data, and other information not defined within IETF PCE working group documents.<a href="#section-3-10" class="pilcrow">¶</a></p>
-<p id="section-3-11">PLSP-ID (Path LSP Identifier): Introduced in <span>[<a href="#RFC8231" class="cite xref">RFC8231</a>]</span>. A unique identifier used in PCEP to
+association type.<a href="#section-2-7" class="pilcrow">¶</a></p>
+<p id="section-2-8">ERO: Explicit Route Object is the path of the LSP encoded into a PCEP object.
+This document distinguishes three cases for the ERO object, because an
+absent ERO and an empty ERO are not equivalent:<a href="#section-2-8" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-2-9.1">
+          <p id="section-2-9.1.1">An absent ERO object, i.e., one not included in the message at all.<a href="#section-2-9.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-2-9.2">
+          <p id="section-2-9.2.1">An empty ERO object, i.e., one that is present but carries no
+subobjects, is represented with the notation "ERO={}".<a href="#section-2-9.2.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-2-9.3">
+          <p id="section-2-9.3.1">An ERO object containing a given sequence of subobjects is
+represented as "ERO={A}".<a href="#section-2-9.3.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+<p id="section-2-10">PCRPT-LSP-DB: PCEP Reported Label Switched Path Database. A logical datastore
+that captures the reported state of Label Switched Paths (LSPs), organized as
+Tunnels and their LSPs. Each PCEP speaker maintains
+its own local copy, populated from PCRpt messages. On a PCE, the PCRPT-LSP-DB
+holds the state reported by all PCCs that report to that PCE. On a PCC, it holds
+the state for the LSPs for which that PCC is the head-end. This term is not
+defined in the PCE architecture; however, it is used in this document to describe
+how a PCEP speaker maintains LSP-related state reported via PCRpt messages.<a href="#section-2-10" class="pilcrow">¶</a></p>
+<p id="section-2-11">EXTENDED-LSP-DB: Extended Label Switched Path Database. A single, optional,
+implementation-specific logical datastore that holds entries for multiple LSPs,
+keyed using the same identifiers as the PCRPT-LSP-DB. It is not required by a
+conforming PCEP implementation. It is typically maintained on the PCE to hold
+additional attributes such as desired (intended) state, telemetry data, operator
+configuration, and other information not defined within IETF PCE working group
+documents; a PCC may maintain an equivalent datastore where useful. This term is
+not defined in the PCE architecture and is used in this document only to refer to
+this conceptual datastore.<a href="#section-2-11" class="pilcrow">¶</a></p>
+<p id="section-2-12">PCE-ASSO-DB: PCEP Association Database. A logical datastore that captures
+PCEP Association membership, populated by PCRpt messages and/or by configuration
+on the PCE. This term is not defined in the PCE architecture; it is used in this
+document to describe how a PCE maintains Association state. See the PCEP
+Association Database section.<a href="#section-2-12" class="pilcrow">¶</a></p>
+<p id="section-2-13">PLSP-ID (Path LSP Identifier): Introduced in <span>[<a href="#RFC8231" class="cite xref">RFC8231</a>]</span>. A unique identifier used in PCEP to
 distinguish a specific LSP between a PCC and a PCE which is constant for the lifetime of
-a PCEP session.<a href="#section-3-11" class="pilcrow">¶</a></p>
+a PCEP session.<a href="#section-2-13" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="pcep-lsp-database">
-<section id="section-4">
+<section id="section-3">
       <h2 id="name-pcep-lsp-database">
-<a href="#section-4" class="section-number selfRef">4. </a><a href="#name-pcep-lsp-database" class="section-name selfRef">PCEP LSP Database</a>
+<a href="#section-3" class="section-number selfRef">3. </a><a href="#name-pcep-lsp-database" class="section-name selfRef">PCEP LSP Database</a>
       </h2>
-<p id="section-4-1">This document uses the concept of the PCRPT-LSP-DB, a database of actual LSP
+<p id="section-3-1">This document uses the concept of the PCRPT-LSP-DB, a database of actual LSP
 state in the network, to illustrate the internal state of PCEP speakers in
-response to PcRpt messages.<a href="#section-4-1" class="pilcrow">¶</a></p>
-<p id="section-4-2">Note that the term "LSP", which stands for "Label Switched Path", if
+response to PCRpt messages.<a href="#section-3-1" class="pilcrow">¶</a></p>
+<p id="section-3-2">Note that the term "LSP", which stands for "Label Switched Path", if
 taken too literally, would restrict the discussion to the MPLS dataplane
 only. In this document, the term "LSP" is applied to non-MPLS paths as well,
-to avoid renaming the term. Alternatively, the term "LSP" could be replaced with "Instance".<a href="#section-4-2" class="pilcrow">¶</a></p>
+to avoid renaming the term.<a href="#section-3-2" class="pilcrow">¶</a></p>
 <div id="structure">
-<section id="section-4.1">
+<section id="section-3.1">
         <h3 id="name-structure">
-<a href="#section-4.1" class="section-number selfRef">4.1. </a><a href="#name-structure" class="section-name selfRef">Structure</a>
+<a href="#section-3.1" class="section-number selfRef">3.1. </a><a href="#name-structure" class="section-name selfRef">Structure</a>
         </h3>
-<p id="section-4.1-1">The distinction between Tunnels and LSPs in the PCRPT-LSP-DB is essential for accurately
+<p id="section-3.1-1">The distinction between Tunnels and LSPs in the PCRPT-LSP-DB is essential for accurately
 modeling state information in PCEP, including procedures such as make-before-break,
-and for maintaining consistent state management across PCEP speakers.<a href="#section-4.1-1" class="pilcrow">¶</a></p>
-<p id="section-4.1-2">The PCRPT-LSP-DB contains two types of information: LSPs and Tunnels. An LSP is identified
+and for maintaining consistent state management across PCEP speakers.<a href="#section-3.1-1" class="pilcrow">¶</a></p>
+<p id="section-3.1-2">The PCRPT-LSP-DB contains two types of information: LSPs and Tunnels. An LSP is identified
 by the LSP-IDENTIFIERS TLV, while a Tunnel is identified by the PLSP-ID in the LSP
-object and/or the SYMBOLIC-NAME (see <span>[<a href="#RFC8231" class="cite xref">RFC8231</a>]</span>).<a href="#section-4.1-2" class="pilcrow">¶</a></p>
-<p id="section-4.1-3">A Tunnel may or may not correspond to an actual tunnel on the router. For
-example, working and protect paths can be implemented as a single
-tunnel interface, but in PCEP, these are represented as two different
-Tunnels with different PLSP-IDs.<a href="#section-4.1-3" class="pilcrow">¶</a></p>
-<p id="section-4.1-4">An LSP can be viewed as an instance of a Tunnel. In steady state,
+object and/or the SYMBOLIC-NAME (see <span>[<a href="#RFC8231" class="cite xref">RFC8231</a>]</span>).<a href="#section-3.1-2" class="pilcrow">¶</a></p>
+<p id="section-3.1-3">A Tunnel in PCEP does not necessarily map one-to-one to a single tunnel
+construct on the router. A tunnel into which a client inserts traffic may
+be supported by one or more underlying transport paths.
+For example, the working and protect paths of
+a single tunnel interface on the router are represented in PCEP as two
+different Tunnels with different PLSP-IDs.<a href="#section-3.1-3" class="pilcrow">¶</a></p>
+<p id="section-3.1-4">An LSP can be viewed as an instance of a Tunnel. In steady state,
 a Tunnel typically has a single LSP; however, during make-before-break
 procedures (see <span>[<a href="#RFC3209" class="cite xref">RFC3209</a>]</span>), multiple LSPs may exist simultaneously to represent
-both the new and old instances during the transition.<a href="#section-4.1-4" class="pilcrow">¶</a></p>
+both the new and old instances during the transition.<a href="#section-3.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="synchronization">
-<section id="section-4.2">
+<section id="section-3.2">
         <h3 id="name-synchronization">
-<a href="#section-4.2" class="section-number selfRef">4.2. </a><a href="#name-synchronization" class="section-name selfRef">Synchronization</a>
+<a href="#section-3.2" class="section-number selfRef">3.2. </a><a href="#name-synchronization" class="section-name selfRef">Synchronization</a>
         </h3>
-<p id="section-4.2-1">Since the PCRPT-LSP-DB contains PCEP-specific information such as PLSP-IDs,
+<p id="section-3.2-1">Since the PCRPT-LSP-DB contains PCEP-specific information such as PLSP-IDs,
 which remain constant for the duration of a PCEP session, both the PCE and
 PCC maintain their own local copies of the PCRPT-LSP-DB.
 The PCE PCRPT-LSP-DB is only modified by PCRpt messages, no other PCEP message
 may modify the PCE PCRPT-LSP-DB.  The PCC PCRPT-LSP-DB is built from actual
 forwarding state that PCC has installed.  PCC uses PCRpt messages to
-synchronize its local PCRPT-LSP-DB to the PCE.<a href="#section-4.2-1" class="pilcrow">¶</a></p>
-<p id="section-4.2-2">The PCE is intended to act based on the most recent state available in the PCRPT-LSP-DB,
-which represents the actual state of Label Switched Paths (LSPs) in the network. This
+synchronize its local PCRPT-LSP-DB to the PCE.<a href="#section-3.2-1" class="pilcrow">¶</a></p>
+<p id="section-3.2-2">The PCE is intended to act based on the most recent state available in the PCRPT-LSP-DB,
+which represents the reported state of Label Switched Paths (LSPs) in the network. This
 does not preclude the PCE from leveraging information obtained outside the PCRPT-LSP-DB.
 For example, implementation-specific mechanisms may be used to collect traffic statistics
-that can be considered during path computation. Such information is not part of the
-PCRPT-LSP-DB itself, but may reference it. Additional data such as desired state, telemetry,
-or operator-intended configurations—may be maintained in a separate, implementation-specific
-logical datastore referred to as the EXTENDED-LSP-DB.<a href="#section-4.2-2" class="pilcrow">¶</a></p>
-<p id="section-4.2-3">Both the PCE and PCC maintain a PCRPT-LSP-DB that reflects the reported (actual) state of LSPs.
-Implementations may choose to store desired state information or other attributes in the
-EXTENDED-LSP-DB. It is important to note that the PCRPT-LSP-DB reflects only the live view
-of the network and does not imply alignment with the desired state.<a href="#section-4.2-3" class="pilcrow">¶</a></p>
-<p id="section-4.2-4">For example, in the case of a PCE-initiated LSP, a change in the LSP configuration made by
+that can be considered during path computation. Such additional information, including
+desired (intended) state, telemetry, and operator configuration, is not part of the
+PCRPT-LSP-DB itself and may instead be held in the separate, optional EXTENDED-LSP-DB
+described in the Terminology section.<a href="#section-3.2-2" class="pilcrow">¶</a></p>
+<p id="section-3.2-3">The PCRPT-LSP-DB reflects the reported state of LSPs and does not imply alignment with the
+desired state. It also does not necessarily reflect the live state of the network, because
+there are two convergence windows during which the databases can lag the network:<a href="#section-3.2-3" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-3.2-4.1">
+            <p id="section-3.2-4.1.1">The network state has changed, but the PCC has not yet updated its own PCRPT-LSP-DB.<a href="#section-3.2-4.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-3.2-4.2">
+            <p id="section-3.2-4.2.1">The PCC has updated its PCRPT-LSP-DB, but the PCRpt carrying that change has not yet
+been received and processed by the PCE.<a href="#section-3.2-4.2.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-3.2-5">For example, in the case of a PCE-initiated LSP, a change in the LSP configuration made by
 an operator represents a modification to the desired state. However, the actual state does
 not change until the PCE sends a PCInit or PCUpd message to the PCC. Upon receipt of such a
 message, the PCC may act on the request, update its local PCRPT-LSP-DB, and generate a PCRpt
 message to inform the PCE of the change. The PCE then updates its own PCRPT-LSP-DB accordingly.
-Once this exchange is complete, the PCRPT-LSP-DBs on both the PCC and the PCE are synchronized.<a href="#section-4.2-4" class="pilcrow">¶</a></p>
+Once this exchange is complete, the PCRPT-LSP-DBs on both the PCC and the PCE are synchronized.<a href="#section-3.2-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="make-before-break-mbb">
-<section id="section-4.3">
+<section id="section-3.3">
         <h3 id="name-make-before-break-mbb">
-<a href="#section-4.3" class="section-number selfRef">4.3. </a><a href="#name-make-before-break-mbb" class="section-name selfRef">Make before Break (MBB)</a>
+<a href="#section-3.3" class="section-number selfRef">3.3. </a><a href="#name-make-before-break-mbb" class="section-name selfRef">Make before Break (MBB)</a>
         </h3>
-<p id="section-4.3-1">Due to variations in how different implementations interpret or handle MBB
-procedures—sometimes resulting in incorrect message processing or misinterpretation—the
-following section provides illustrative examples to clarify expected MBB behavior.<a href="#section-4.3-1" class="pilcrow">¶</a></p>
+<p id="section-3.3-1">Due to variations in how different implementations interpret or handle MBB
+procedures, sometimes resulting in incorrect message processing or
+misinterpretation, the following section provides illustrative examples to
+clarify expected MBB behavior.<a href="#section-3.3-1" class="pilcrow">¶</a></p>
 <div id="successful-mbb">
-<section id="section-4.3.1">
+<section id="section-3.3.1">
           <h4 id="name-successful-mbb">
-<a href="#section-4.3.1" class="section-number selfRef">4.3.1. </a><a href="#name-successful-mbb" class="section-name selfRef">Successful MBB</a>
+<a href="#section-3.3.1" class="section-number selfRef">3.3.1. </a><a href="#name-successful-mbb" class="section-name selfRef">Successful MBB</a>
           </h4>
-<p id="section-4.3.1-1">Below is an example of performing MBB to switch a Tunnel from one
+<p id="section-3.3.1-1">Below is an example of performing MBB to switch a Tunnel from one
 path to another. The path encoded into the ERO object
-is represented as ERO={A} and ERO={B}.<a href="#section-4.3.1-1" class="pilcrow">¶</a></p>
-<p id="section-4.3.1-2">PCC has an existing LSP in UP state, with LSP-ID=2.  PCC sends
-PCRpt(R-FLAG=0, PLSP-ID=100, LSP-ID=2, ERO={A}, OPER-FLAG=UP).<a href="#section-4.3.1-2" class="pilcrow">¶</a></p>
-<div class="alignLeft art-text artwork" id="section-4.3.1-3">
+is represented as ERO={A} and ERO={B}.<a href="#section-3.3.1-1" class="pilcrow">¶</a></p>
+<p id="section-3.3.1-2">PCC has an existing LSP in UP state, with LSP-ID=2.  PCC sends
+PCRpt(R-FLAG=0, PLSP-ID=100, LSP-ID=2, ERO={A}, OPER-FLAG=UP).<a href="#section-3.3.1-2" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-3.3.1-3">
 <pre>
 +---------------------------------------------------------------+
 | TUNNEL          | LSP                                         |
@@ -1403,10 +1435,11 @@ PCRpt(R-FLAG=0, PLSP-ID=100, LSP-ID=2, ERO={A}, OPER-FLAG=UP).<a href="#section-
 | PLSP-ID=100     | LSP-ID=2, ERO={A}, OPER=UP                  |
 +---------------------------------------------------------------+
 
-                Figure 1: Content of LSP DB
-</pre><a href="#section-4.3.1-3" class="pilcrow">¶</a>
+                Figure 1: Content of PCRPT-LSP-DB
+</pre><a href="#section-3.3.1-3" class="pilcrow">¶</a>
 </div>
-<p id="section-4.3.1-4">PCC initiates the MBB procedure by creating a new LSP with LSP-ID=3.
+<p id="section-3.3.1-4">The resulting content of the PCRPT-LSP-DB is shown in Figure 1.<a href="#section-3.3.1-4" class="pilcrow">¶</a></p>
+<p id="section-3.3.1-5">PCC initiates the MBB procedure by creating a new LSP with LSP-ID=3.
 It does not matter what triggered the creation of the new LSP, it
 could have been due to a new path received via PCUpd (if the given
 Tunnel is delegated), or it could have been local computation on the
@@ -1414,10 +1447,10 @@ PCC (if the Tunnel is locally computed on the PCC), or it could have
 been a change in configuration on the PCC (if the Tunnel's path is
 explicitly configured on the PCC).  It is important to emphasize that
 the procedure for updating the PCRPT-LSP-DB is common, regardless of the
-trigger that caused the change.<a href="#section-4.3.1-4" class="pilcrow">¶</a></p>
-<p id="section-4.3.1-5">PCC sends PCRpt(R-FLAG=0, PLSP-ID=100, LSP-ID=3, ERO={B}, OPER-
-FLAG=UP).<a href="#section-4.3.1-5" class="pilcrow">¶</a></p>
-<div class="alignLeft art-text artwork" id="section-4.3.1-6">
+trigger that caused the change.<a href="#section-3.3.1-5" class="pilcrow">¶</a></p>
+<p id="section-3.3.1-6">PCC sends PCRpt(R-FLAG=0, PLSP-ID=100, LSP-ID=3, ERO={B}, OPER-
+FLAG=UP).<a href="#section-3.3.1-6" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-3.3.1-7">
 <pre>
 +---------------------------------------------------------------+
 | TUNNEL          | LSP                                         |
@@ -1426,13 +1459,14 @@ FLAG=UP).<a href="#section-4.3.1-5" class="pilcrow">¶</a></p>
 |                 | LSP-ID=3, ERO={B}, OPER=UP                  |
 +---------------------------------------------------------------+
 
-                Figure 2: Content of LSP DB
-</pre><a href="#section-4.3.1-6" class="pilcrow">¶</a>
+                Figure 2: Content of PCRPT-LSP-DB
+</pre><a href="#section-3.3.1-7" class="pilcrow">¶</a>
 </div>
-<p id="section-4.3.1-7">After traffic has successfully switched to the new LSP, the PCC
+<p id="section-3.3.1-8">Both LSPs now exist simultaneously, as shown in Figure 2.<a href="#section-3.3.1-8" class="pilcrow">¶</a></p>
+<p id="section-3.3.1-9">After traffic has successfully switched to the new LSP, the PCC
 cleans up the old LSP.  PCC sends PCRpt(R-FLAG=1, PLSP-ID=100, LSP-
-ID=2).<a href="#section-4.3.1-7" class="pilcrow">¶</a></p>
-<div class="alignLeft art-text artwork" id="section-4.3.1-8">
+ID=2).<a href="#section-3.3.1-9" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-3.3.1-10">
 <pre>
 +---------------------------------------------------------------+
 | TUNNEL          | LSP                                         |
@@ -1440,22 +1474,23 @@ ID=2).<a href="#section-4.3.1-7" class="pilcrow">¶</a></p>
 | PLSP-ID=100     | LSP-ID=3, ERO={B}, OPER=UP                  |
 +---------------------------------------------------------------+
 
-                Figure 3: Content of LSP DB
-</pre><a href="#section-4.3.1-8" class="pilcrow">¶</a>
+                Figure 3: Content of PCRPT-LSP-DB
+</pre><a href="#section-3.3.1-10" class="pilcrow">¶</a>
 </div>
+<p id="section-3.3.1-11">Only the new LSP remains, as shown in Figure 3.<a href="#section-3.3.1-11" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="aborted-mbb">
-<section id="section-4.3.2">
+<section id="section-3.3.2">
           <h4 id="name-aborted-mbb">
-<a href="#section-4.3.2" class="section-number selfRef">4.3.2. </a><a href="#name-aborted-mbb" class="section-name selfRef">Aborted MBB</a>
+<a href="#section-3.3.2" class="section-number selfRef">3.3.2. </a><a href="#name-aborted-mbb" class="section-name selfRef">Aborted MBB</a>
           </h4>
-<p id="section-4.3.2-1">The MBB process can abort when the newly created LSP is destroyed
+<p id="section-3.3.2-1">The MBB process can abort when the newly created LSP is destroyed
 before it is installed as traffic carrying.  This scenario is
-described below.<a href="#section-4.3.2-1" class="pilcrow">¶</a></p>
-<p id="section-4.3.2-2">PCC has an existing LSP in UP state, with LSP-ID=2.  PCC sends
-PCRpt(R-FLAG=0, OPER-FLAG=UP, PLSP-ID=100, LSP-ID=2).<a href="#section-4.3.2-2" class="pilcrow">¶</a></p>
-<div class="alignLeft art-text artwork" id="section-4.3.2-3">
+described below.<a href="#section-3.3.2-1" class="pilcrow">¶</a></p>
+<p id="section-3.3.2-2">PCC has an existing LSP in UP state, with LSP-ID=2.  PCC sends
+PCRpt(R-FLAG=0, OPER-FLAG=UP, PLSP-ID=100, LSP-ID=2).<a href="#section-3.3.2-2" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-3.3.2-3">
 <pre>
 +---------------------------------------------------------------+
 | TUNNEL          | LSP                                         |
@@ -1463,13 +1498,14 @@ PCRpt(R-FLAG=0, OPER-FLAG=UP, PLSP-ID=100, LSP-ID=2).<a href="#section-4.3.2-2" 
 | PLSP-ID=100     | LSP-ID=2, OPER=UP                           |
 +---------------------------------------------------------------+
 
-                Figure 4: Content of LSP DB
-</pre><a href="#section-4.3.2-3" class="pilcrow">¶</a>
+                Figure 4: Content of PCRPT-LSP-DB
+</pre><a href="#section-3.3.2-3" class="pilcrow">¶</a>
 </div>
-<p id="section-4.3.2-4">MBB procedure is initiated, a new LSP is created with LSP-ID=3.  LSP
+<p id="section-3.3.2-4">The initial content of the PCRPT-LSP-DB is shown in Figure 4.<a href="#section-3.3.2-4" class="pilcrow">¶</a></p>
+<p id="section-3.3.2-5">MBB procedure is initiated, a new LSP is created with LSP-ID=3.  LSP
 is currently being established, so its oper state is DOWN.  PCC sends
-PCRpt(R-FLAG=0, OPER-FLAG=DOWN, PLSP-ID=100, LSP-ID=3).<a href="#section-4.3.2-4" class="pilcrow">¶</a></p>
-<div class="alignLeft art-text artwork" id="section-4.3.2-5">
+PCRpt(R-FLAG=0, OPER-FLAG=DOWN, PLSP-ID=100, LSP-ID=3).<a href="#section-3.3.2-5" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-3.3.2-6">
 <pre>
 +---------------------------------------------------------------+
 | TUNNEL          | LSP                                         |
@@ -1478,12 +1514,14 @@ PCRpt(R-FLAG=0, OPER-FLAG=DOWN, PLSP-ID=100, LSP-ID=3).<a href="#section-4.3.2-4
 |                 | LSP-ID=3, OPER=DOWN                         |
 +---------------------------------------------------------------+
 
-                Figure 5: Content of LSP DB
-</pre><a href="#section-4.3.2-5" class="pilcrow">¶</a>
+                Figure 5: Content of PCRPT-LSP-DB
+</pre><a href="#section-3.3.2-6" class="pilcrow">¶</a>
 </div>
-<p id="section-4.3.2-6">MBB procedure is aborted.  PCC sends PCRpt(R-FLAG=1, PLSP-ID=100,
-LSP-ID=3).<a href="#section-4.3.2-6" class="pilcrow">¶</a></p>
-<div class="alignLeft art-text artwork" id="section-4.3.2-7">
+<p id="section-3.3.2-7">The new LSP is being established while the old LSP remains UP, as shown
+in Figure 5.<a href="#section-3.3.2-7" class="pilcrow">¶</a></p>
+<p id="section-3.3.2-8">MBB procedure is aborted.  PCC sends PCRpt(R-FLAG=1, PLSP-ID=100,
+LSP-ID=3).<a href="#section-3.3.2-8" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-3.3.2-9">
 <pre>
 +---------------------------------------------------------------+
 | TUNNEL          | LSP                                         |
@@ -1491,9 +1529,11 @@ LSP-ID=3).<a href="#section-4.3.2-6" class="pilcrow">¶</a></p>
 | PLSP-ID=100     | LSP-ID=2, OPER=UP                           |
 +---------------------------------------------------------------+
 
-                Figure 6: Content of LSP DB
-</pre><a href="#section-4.3.2-7" class="pilcrow">¶</a>
+                Figure 6: Content of PCRPT-LSP-DB
+</pre><a href="#section-3.3.2-9" class="pilcrow">¶</a>
 </div>
+<p id="section-3.3.2-10">The new LSP has been removed and only the original LSP remains, as shown
+in Figure 6.<a href="#section-3.3.2-10" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -1501,26 +1541,30 @@ LSP-ID=3).<a href="#section-4.3.2-6" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="pcep-association-database">
-<section id="section-5">
+<section id="section-4">
       <h2 id="name-pcep-association-database">
-<a href="#section-5" class="section-number selfRef">5. </a><a href="#name-pcep-association-database" class="section-name selfRef">PCEP Association Database</a>
+<a href="#section-4" class="section-number selfRef">4. </a><a href="#name-pcep-association-database" class="section-name selfRef">PCEP Association Database</a>
       </h2>
-<p id="section-5-1">PCEP Association is the instantiate of a group containing at least one LSP.<a href="#section-5-1" class="pilcrow">¶</a></p>
-<p id="section-5-2">The PCE ASSO DB is populated by PCRpt messages and/or via
+<p id="section-4-1">A PCEP Association is the instantiation of a group containing at least one LSP.<a href="#section-4-1" class="pilcrow">¶</a></p>
+<p id="section-4-2">The PCE-ASSO-DB is populated by PCRpt messages and/or via
 configuration on the PCE itself. An Association is identified by the
 Association Parameters. As the Association Parameters contain many fields,
 all fields are grouped into a single value for convenience.
 The notation ASSO_PARAM=A and ASSO_PARAM=B is used to refer to
-different PCEP Associations: A and B, respectively.<a href="#section-5-2" class="pilcrow">¶</a></p>
+different PCEP Associations: A and B, respectively.<a href="#section-4-2" class="pilcrow">¶</a></p>
+<p id="section-4-3">The message parameter notation used in the examples below (for example,
+R-FLAG, OPER-FLAG, ASSO_R_FLAG, and ASSO_PARAM) refers to the
+corresponding flags and fields of the LSP and ASSOCIATION objects
+defined in <span>[<a href="#RFC8231" class="cite xref">RFC8231</a>]</span> and <span>[<a href="#RFC8697" class="cite xref">RFC8697</a>]</span>.<a href="#section-4-3" class="pilcrow">¶</a></p>
 <div id="lsps-in-same-association">
-<section id="section-5.1">
+<section id="section-4.1">
         <h3 id="name-lsps-in-same-association">
-<a href="#section-5.1" class="section-number selfRef">5.1. </a><a href="#name-lsps-in-same-association" class="section-name selfRef">LSPs in same Association</a>
+<a href="#section-4.1" class="section-number selfRef">4.1. </a><a href="#name-lsps-in-same-association" class="section-name selfRef">LSPs in same Association</a>
         </h3>
-<p id="section-5.1-1">The following example illustrates how LSPs join the same Association.<a href="#section-5.1-1" class="pilcrow">¶</a></p>
-<p id="section-5.1-2">PCC creates the first LSP.  PCC sends PCRpt(R-FLAG=0, PLSP-ID=100,
-LSP-ID=1, ASSO_PARAM=A, ASSO_R_FLAG=0).<a href="#section-5.1-2" class="pilcrow">¶</a></p>
-<div class="alignLeft art-text artwork" id="section-5.1-3">
+<p id="section-4.1-1">The following example illustrates how LSPs join the same Association.<a href="#section-4.1-1" class="pilcrow">¶</a></p>
+<p id="section-4.1-2">The PCC creates the first LSP.  The PCC sends PCRpt(R-FLAG=0, PLSP-ID=100,
+LSP-ID=1, ASSO_PARAM=A, ASSO_R_FLAG=0).<a href="#section-4.1-2" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-4.1-3">
 <pre>
 +---------------------------------------------------------------+
 | ASSO            | LSP                                         |
@@ -1528,12 +1572,13 @@ LSP-ID=1, ASSO_PARAM=A, ASSO_R_FLAG=0).<a href="#section-5.1-2" class="pilcrow">
 | ASSO_PARAM=A    | PLSP-ID=100, LSP-ID=1                       |
 +---------------------------------------------------------------+
 
-                Figure 7: Content of PCE ASSO DB
-</pre><a href="#section-5.1-3" class="pilcrow">¶</a>
+                Figure 7: Content of PCE-ASSO-DB
+</pre><a href="#section-4.1-3" class="pilcrow">¶</a>
 </div>
-<p id="section-5.1-4">PCC creates the second LSP.  PCC sends PCRpt(R-FLAG=0, PLSP-ID=200,
-LSP-ID=1, ASSO_PARAM=A, ASSO_R_FLAG=0).<a href="#section-5.1-4" class="pilcrow">¶</a></p>
-<div class="alignLeft art-text artwork" id="section-5.1-5">
+<p id="section-4.1-4">The resulting content of the PCE-ASSO-DB is shown in Figure 7.<a href="#section-4.1-4" class="pilcrow">¶</a></p>
+<p id="section-4.1-5">The PCC creates the second LSP.  The PCC sends PCRpt(R-FLAG=0, PLSP-ID=200,
+LSP-ID=1, ASSO_PARAM=A, ASSO_R_FLAG=0).<a href="#section-4.1-5" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-4.1-6">
 <pre>
 +---------------------------------------------------------------+
 | ASSO            | LSP                                         |
@@ -1542,20 +1587,21 @@ LSP-ID=1, ASSO_PARAM=A, ASSO_R_FLAG=0).<a href="#section-5.1-4" class="pilcrow">
 |                 | PLSP-ID=200, LSP-ID=1                       |
 +---------------------------------------------------------------+
 
-                Figure 8: Content of PCE ASSO DB
-</pre><a href="#section-5.1-5" class="pilcrow">¶</a>
+                Figure 8: Content of PCE-ASSO-DB
+</pre><a href="#section-4.1-6" class="pilcrow">¶</a>
 </div>
-<p id="section-5.1-6">PCC updates the first LSP. As <span>[<a href="#RFC8697" class="cite xref">RFC8697</a>]</span> indicates, subsequent PcRpt
+<p id="section-4.1-7">Both LSPs are now members of the same Association, as shown in Figure 8.<a href="#section-4.1-7" class="pilcrow">¶</a></p>
+<p id="section-4.1-8">The PCC updates the first LSP. As <span>[<a href="#RFC8697" class="cite xref">RFC8697</a>]</span> indicates, subsequent PCRpt
 should include only the associations that are being modified or removed.
-Therefore it is optional as to send the
+Therefore it is optional whether to send the
 ASSOCIATION object in this PCRpt, since the LSP is already in the
-Association.  PCC sends PCRpt(R-FLAG=0, PLSP-ID=100, LSP-ID=1).  The
-content of the PCE ASSO DB is unchanged.  Note that the PCC sends the
+Association.  The PCC sends PCRpt(R-FLAG=0, PLSP-ID=100, LSP-ID=1).  The
+content of the PCE-ASSO-DB is unchanged.  Note that the PCC sends the
 ASSOCIATION OBJECT in the first PCRpt during SYNC state, even if it
 has already issued a PCRpt with the association object sometime in
 the past with this PCE.  The synchronization steps outlined in
-<span>[<a href="#RFC8697" class="cite xref">RFC8697</a>]</span> are to be followed.<a href="#section-5.1-6" class="pilcrow">¶</a></p>
-<div class="alignLeft art-text artwork" id="section-5.1-7">
+<span>[<a href="#RFC8697" class="cite xref">RFC8697</a>]</span> are to be followed.<a href="#section-4.1-8" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-4.1-9">
 <pre>
 +---------------------------------------------------------------+
 | ASSO            | LSP                                         |
@@ -1564,12 +1610,13 @@ the past with this PCE.  The synchronization steps outlined in
 |                 | PLSP-ID=200, LSP-ID=1                       |
 +---------------------------------------------------------------+
 
-                Figure 9: Content of PCE ASSO DB
-</pre><a href="#section-5.1-7" class="pilcrow">¶</a>
+                Figure 9: Content of PCE-ASSO-DB
+</pre><a href="#section-4.1-9" class="pilcrow">¶</a>
 </div>
-<p id="section-5.1-8">PCC decides to delete the second LSP.  PCC sends PCRpt(R-FLAG=1,
-PLSP-ID=200, LSP-ID=1).<a href="#section-5.1-8" class="pilcrow">¶</a></p>
-<div class="alignLeft art-text artwork" id="section-5.1-9">
+<p id="section-4.1-10">The content of the PCE-ASSO-DB is unchanged, as shown in Figure 9.<a href="#section-4.1-10" class="pilcrow">¶</a></p>
+<p id="section-4.1-11">The PCC decides to delete the second LSP.  The PCC sends PCRpt(R-FLAG=1,
+PLSP-ID=200, LSP-ID=1).<a href="#section-4.1-11" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-4.1-12">
 <pre>
 +---------------------------------------------------------------+
 | ASSO            | LSP                                         |
@@ -1577,13 +1624,14 @@ PLSP-ID=200, LSP-ID=1).<a href="#section-5.1-8" class="pilcrow">¶</a></p>
 | ASSO_PARAM=A    | PLSP-ID=100, LSP-ID=1                       |
 +---------------------------------------------------------------+
 
-                Figure 10: Content of PCE ASSO DB
-</pre><a href="#section-5.1-9" class="pilcrow">¶</a>
+                Figure 10: Content of PCE-ASSO-DB
+</pre><a href="#section-4.1-12" class="pilcrow">¶</a>
 </div>
-<p id="section-5.1-10">PCC decides to remove the first LSP from the Association, but not
-delete the LSP itself.  PCC sends PCRpt(R-FLAG=0, PLSP-ID=100, LSP-
-ID=1, ASSO_PARAM=A, ASSO_R_FLAG=1).  The PCE ASSO DB is now empty.<a href="#section-5.1-10" class="pilcrow">¶</a></p>
-<div class="alignLeft art-text artwork" id="section-5.1-11">
+<p id="section-4.1-13">Only the first LSP remains in the Association, as shown in Figure 10.<a href="#section-4.1-13" class="pilcrow">¶</a></p>
+<p id="section-4.1-14">The PCC decides to remove the first LSP from the Association, but not
+delete the LSP itself.  The PCC sends PCRpt(R-FLAG=0, PLSP-ID=100, LSP-
+ID=1, ASSO_PARAM=A, ASSO_R_FLAG=1).  The PCE-ASSO-DB is now empty.<a href="#section-4.1-14" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-4.1-15">
 <pre>
 +---------------------------------------------------------------+
 | ASSO            | LSP                                         |
@@ -1591,26 +1639,27 @@ ID=1, ASSO_PARAM=A, ASSO_R_FLAG=1).  The PCE ASSO DB is now empty.<a href="#sect
 | -               |                                             |
 +---------------------------------------------------------------+
 
-                Figure 11: Content of PCE ASSO DB
-</pre><a href="#section-5.1-11" class="pilcrow">¶</a>
+                Figure 11: Content of PCE-ASSO-DB
+</pre><a href="#section-4.1-15" class="pilcrow">¶</a>
 </div>
+<p id="section-4.1-16">The Association is now empty, as shown in Figure 11.<a href="#section-4.1-16" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="switch-association-during-mbb">
-<section id="section-5.2">
+<section id="section-4.2">
         <h3 id="name-switch-association-during-m">
-<a href="#section-5.2" class="section-number selfRef">5.2. </a><a href="#name-switch-association-during-m" class="section-name selfRef">Switch Association during MBB</a>
+<a href="#section-4.2" class="section-number selfRef">4.2. </a><a href="#name-switch-association-during-m" class="section-name selfRef">Switch Association during MBB</a>
         </h3>
-<p id="section-5.2-1">The following example illustrates how a Tunnel goes through MBB
-and switches from Association A to Association B.<a href="#section-5.2-1" class="pilcrow">¶</a></p>
-<p id="section-5.2-2">Each new LSP (identified by the LSP-ID) does not inherit the
+<p id="section-4.2-1">The following example illustrates how a Tunnel goes through MBB
+and switches from Association A to Association B.<a href="#section-4.2-1" class="pilcrow">¶</a></p>
+<p id="section-4.2-2">Each new LSP (identified by the LSP-ID) does not inherit the
 Association membership of any previous LSPs within the same Tunnel.
 This is so that a Tunnel can have two LSPs that are in different
 Associations, this may be done when switching from one Association to
-another.<a href="#section-5.2-2" class="pilcrow">¶</a></p>
-<p id="section-5.2-3">PCC creates the first LSP.  PCC sends PCRpt(R-FLAG=0, PLSP-ID=100,
-LSP-ID=1, ASSO_PARAM=A, ASSO_R_FLAG=0).<a href="#section-5.2-3" class="pilcrow">¶</a></p>
-<div class="alignLeft art-text artwork" id="section-5.2-4">
+another.<a href="#section-4.2-2" class="pilcrow">¶</a></p>
+<p id="section-4.2-3">The PCC creates the first LSP.  The PCC sends PCRpt(R-FLAG=0, PLSP-ID=100,
+LSP-ID=1, ASSO_PARAM=A, ASSO_R_FLAG=0).<a href="#section-4.2-3" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-4.2-4">
 <pre>
 +---------------------------------------------------------------+
 | ASSO            | LSP                                         |
@@ -1618,12 +1667,13 @@ LSP-ID=1, ASSO_PARAM=A, ASSO_R_FLAG=0).<a href="#section-5.2-3" class="pilcrow">
 | ASSO_PARAM=A    | PLSP-ID=100, LSP-ID=1                       |
 +---------------------------------------------------------------+
 
-                Figure 12: Content of PCE ASSO DB
-</pre><a href="#section-5.2-4" class="pilcrow">¶</a>
+                Figure 12: Content of PCE-ASSO-DB
+</pre><a href="#section-4.2-4" class="pilcrow">¶</a>
 </div>
-<p id="section-5.2-5">PCC creates the MBB LSP in a different Association.  PCC sends
-PCRpt(R-FLAG=0, PLSP-ID=100, LSP-ID=2, ASSO_PARAM=B, ASSO_R_FLAG=0).<a href="#section-5.2-5" class="pilcrow">¶</a></p>
-<div class="alignLeft art-text artwork" id="section-5.2-6">
+<p id="section-4.2-5">The resulting content of the PCE-ASSO-DB is shown in Figure 12.<a href="#section-4.2-5" class="pilcrow">¶</a></p>
+<p id="section-4.2-6">The PCC creates the MBB LSP in a different Association.  The PCC sends
+PCRpt(R-FLAG=0, PLSP-ID=100, LSP-ID=2, ASSO_PARAM=B, ASSO_R_FLAG=0).<a href="#section-4.2-6" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-4.2-7">
 <pre>
 +---------------------------------------------------------------+
 | ASSO            | LSP                                         |
@@ -1633,12 +1683,14 @@ PCRpt(R-FLAG=0, PLSP-ID=100, LSP-ID=2, ASSO_PARAM=B, ASSO_R_FLAG=0).<a href="#se
 | ASSO_PARAM=B    | PLSP-ID=100, LSP-ID=2                       |
 +---------------------------------------------------------------+
 
-                Figure 13: Content of PCE ASSO DB
-</pre><a href="#section-5.2-6" class="pilcrow">¶</a>
+                Figure 13: Content of PCE-ASSO-DB
+</pre><a href="#section-4.2-7" class="pilcrow">¶</a>
 </div>
-<p id="section-5.2-7">PCC deletes the old LSP.  PCC sends PCRpt(R-FLAG=1, PLSP-ID=100, LSP-
-ID=1).<a href="#section-5.2-7" class="pilcrow">¶</a></p>
-<div class="alignLeft art-text artwork" id="section-5.2-8">
+<p id="section-4.2-8">The two LSPs of the Tunnel are now in different Associations, as shown
+in Figure 13.<a href="#section-4.2-8" class="pilcrow">¶</a></p>
+<p id="section-4.2-9">The PCC deletes the old LSP.  The PCC sends PCRpt(R-FLAG=1, PLSP-ID=100, LSP-
+ID=1).<a href="#section-4.2-9" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-4.2-10">
 <pre>
 +---------------------------------------------------------------+
 | ASSO            | LSP                                         |
@@ -1646,105 +1698,209 @@ ID=1).<a href="#section-5.2-7" class="pilcrow">¶</a></p>
 | ASSO_PARAM=B    | PLSP-ID=100, LSP-ID=2                       |
 +---------------------------------------------------------------+
 
-                Figure 14: Content of PCE ASSO DB
-</pre><a href="#section-5.2-8" class="pilcrow">¶</a>
+                Figure 14: Content of PCE-ASSO-DB
+</pre><a href="#section-4.2-10" class="pilcrow">¶</a>
 </div>
+<p id="section-4.2-11">Only the new LSP in Association B remains, as shown in Figure 14.<a href="#section-4.2-11" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
 </div>
 <div id="computation-constraints">
-<section id="section-6">
+<section id="section-5">
       <h2 id="name-computation-constraints">
-<a href="#section-6" class="section-number selfRef">6. </a><a href="#name-computation-constraints" class="section-name selfRef">Computation Constraints</a>
+<a href="#section-5" class="section-number selfRef">5. </a><a href="#name-computation-constraints" class="section-name selfRef">Computation Constraints</a>
       </h2>
-<p id="section-6-1">As well as reporting any state change in the network on a PCRpt message,
+<p id="section-5-1">As well as reporting any state change in the network on a PCRpt message,
 a PCC may also change the parameters of a delegated LSP. For example, it may remove or
 modify the computation constraints that it wishes the PCE to apply as it
 computes any updated paths in the future. For any PCEP object that
 specifies a path computation constraint and that does not have a defined
 explicit removal flag, the absence of that entire object on a repeat or
-follow-up PcRpt message indicates removal of the constraint previously
+follow-up PCRpt message indicates removal of the constraint previously
 specified by that object. For example,
-suppose the first PcRpt contains an LSPA object with some affinity constraints.
-Then if a subsequent PcRpt does not contain an LSPA object, then this means that
+suppose the first PCRpt contains an LSPA object with some affinity constraints.
+Then if a subsequent PCRpt does not contain an LSPA object, then this means that
 the previously specified affinity constraints do not apply anymore.
 Same applies to all PCEP objects, like METRIC, BANDWIDTH, etc., which
 do not have an explicit flag for removal.  This simply ensures that
 it is possible to remove a constraint without using an explicit
-removal flag.<a href="#section-6-1" class="pilcrow">¶</a></p>
+removal flag.<a href="#section-5-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="overloaded-pce">
-<section id="section-7">
+<section id="section-6">
       <h2 id="name-overloaded-pce">
-<a href="#section-7" class="section-number selfRef">7. </a><a href="#name-overloaded-pce" class="section-name selfRef">Overloaded PCE</a>
+<a href="#section-6" class="section-number selfRef">6. </a><a href="#name-overloaded-pce" class="section-name selfRef">Overloaded PCE</a>
       </h2>
-<p id="section-7-1">[RFC5440] defines the concept of an Overloaded PCE and explains how
+<p id="section-6-1"><span>[<a href="#RFC5440" class="cite xref">RFC5440</a>]</span> defines the concept of an Overloaded PCE and explains how
 a PCE may signal to a PCC that it is congested, instructing that
-"no requests should be sent to that PCE until the overload state is cleared."<a href="#section-7-1" class="pilcrow">¶</a></p>
-<p id="section-7-2">In the case of an overloaded PCE, a PCC implementation could choose to wait for the PCE
-to no longer be overloaded or instead send a PcReq to a backup, non-overloaded PCE instead.<a href="#section-7-2" class="pilcrow">¶</a></p>
-<p id="section-7-3"><span>[<a href="#RFC8231" class="cite xref">RFC8231</a>]</span> builds upon [RFC5440] by introducing the concept of a
+"no requests should be sent to that PCE until the overload state is cleared."<a href="#section-6-1" class="pilcrow">¶</a></p>
+<p id="section-6-2">In the case of an overloaded PCE, a PCC implementation could choose to wait for the PCE
+to no longer be overloaded or instead send a PCReq to a backup, non-overloaded PCE instead.<a href="#section-6-2" class="pilcrow">¶</a></p>
+<p id="section-6-3"><span>[<a href="#RFC8231" class="cite xref">RFC8231</a>]</span> builds upon <span>[<a href="#RFC5440" class="cite xref">RFC5440</a>]</span> by introducing the concept of a
 Stateful PCE, which allows delegation of LSP control to a single PCE.
 However, it does not address the case of an overloaded PCE. According
 to <span>[<a href="#RFC8231" class="cite xref">RFC8231</a>]</span>, a PCE maintains delegation until it is revoked by the PCC
 or returned back to PCC by the PCE. The PCC may revoke delegation and re-assign
-it to another PCE.<a href="#section-7-3" class="pilcrow">¶</a></p>
-<p id="section-7-4">As a result, a PCE in an overload state still retains LSP delegation.
+it to another PCE.<a href="#section-6-3" class="pilcrow">¶</a></p>
+<p id="section-6-4">As a result, a PCE in an overload state still retains LSP delegation.
 For PCC-initiated LSPs, the PCC may revoke delegation from the overloaded
 PCE and maintain delegation for itself or delegate it to another PCE. For
-PCE-initiated LSPs, since the PCC cannot revoke delegation as per [RFC8281],
-the overloaded PCE may return the delegation to the PCC.<a href="#section-7-4" class="pilcrow">¶</a></p>
-<p id="section-7-5">The PCE will continue to send PcRpt messages to PCE even though it may indicate
-it is overloaded, otherwise the the PCRPT-LSP-DB on PCE may go out of sync.<a href="#section-7-5" class="pilcrow">¶</a></p>
+PCE-initiated LSPs, since the PCC cannot revoke delegation as per <span>[<a href="#RFC8281" class="cite xref">RFC8281</a>]</span>,
+the overloaded PCE may return the delegation to the PCC.<a href="#section-6-4" class="pilcrow">¶</a></p>
+<div id="reports-toward-an-overloaded-pce">
+<section id="section-6.1">
+        <h3 id="name-reports-toward-an-overloade">
+<a href="#section-6.1" class="section-number selfRef">6.1. </a><a href="#name-reports-toward-an-overloade" class="section-name selfRef">Reports toward an Overloaded PCE</a>
+        </h3>
+<p id="section-6.1-1">The guidance in this section clarifies behavior for reports and does not
+modify <span>[<a href="#RFC5440" class="cite xref">RFC5440</a>]</span>. Any change that would require a PCC to stop sending reports
+toward an overloaded PCE would be an update to <span>[<a href="#RFC5440" class="cite xref">RFC5440</a>]</span> and is out of scope for
+this document.<a href="#section-6.1-1" class="pilcrow">¶</a></p>
+<p id="section-6.1-2">There is a trade-off in how a PCC handles PCRpt messages while a PCE
+signals that it is overloaded. Fully reprocessing a flood of PCRpt messages consumes
+CPU and memory on the PCE, and so continuing to send reports could prolong or worsen
+the overload condition.However, the longer the PCE is without the latest reported state,
+the more likely it is to compute paths using stale information.<a href="#section-6.1-2" class="pilcrow">¶</a></p>
+<p id="section-6.1-3">What it means for a PCE to be overloaded is implementation specific. For example, an
+implementation may use separate resources for ingesting reports and for
+performing computation, in which case it may be overloaded for
+computation while still able to process reports. A PCE may also wish to
+remain synchronized with the network without yet participating in
+active computation, for example while a new instance is being
+bootstrapped.<a href="#section-6.1-3" class="pilcrow">¶</a></p>
+<p id="section-6.1-4">Given these trade offs, the following describes the behavior a PCC may
+adopt toward an overloaded PCE. Sending reports as usual is the
+baseline interoperable behavior and throttling reports is an optional
+behavior:<a href="#section-6.1-4" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.1-5.1">
+            <p id="section-6.1-5.1.1">Sending reports as usual: the PCC continues to send PCRpt messages so
+that the PCRPT-LSP-DB on the PCE remains synchronized. This is the
+baseline behavior and requires no change to existing implementations.<a href="#section-6.1-5.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-6.1-5.2">
+            <p id="section-6.1-5.2.1">Throttling reports: the PCC may make a local decision
+about whether to immediately send a PCRpt message to the PCE or to
+hold that message until the PCE indicates it is no longer overloaded.
+This decision may depend on how significant the change to the LSP is,
+how long the message has been held, and how many other messages are
+held for the same reason. In all cases the PCC should log the
+situation, applying thresholding to the rate of generation of log
+events, so that an operator can determine what is happening.<a href="#section-6.1-5.2.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-6.1-6">Stopping reports entirely while the PCE is overloaded is not
+recommended, because it risks the PCRPT-LSP-DB on the PCE going out of
+sync with the network for the full duration of the overload condition.<a href="#section-6.1-6" class="pilcrow">¶</a></p>
+<p id="section-6.1-7">The decision to throttle cannot depend on local policy alone, because
+some reports remain significant regardless of policy. At a minimum, the
+following reports should not be throttled:<a href="#section-6.1-7" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.1-8.1">
+            <p id="section-6.1-8.1.1">A PCRpt sent in response to a PCUpd, since a PCE may still take
+actions on a delegated LSP while marked overloaded.<a href="#section-6.1-8.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-6.1-8.2">
+            <p id="section-6.1-8.2.1">PCRpt messages sent as part of state synchronization during session
+establishment.<a href="#section-6.1-8.2.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-6.1-9">A PCC may throttle other less significant reports such as frequent or
+redundant updates, for example local protection availability flags.<a href="#section-6.1-9" class="pilcrow">¶</a></p>
+<p id="section-6.1-10">As an alternative to per-report throttling, a PCE under overload
+may selectively close one or more PCEP sessions, choosing which
+sessions to prioritize. When the overload condition clears, the
+sessions are re-established and standard state synchronization
+<span>[<a href="#RFC8231" class="cite xref">RFC8231</a>]</span> brings the PCE back in sync with the latest state. This
+avoids the complexity of deciding, on a per-report basis, which reports
+to hold or drop.<a href="#section-6.1-10" class="pilcrow">¶</a></p>
+</section>
+</div>
 </section>
 </div>
 <div id="security-considerations">
-<section id="section-8">
+<section id="section-7">
       <h2 id="name-security-considerations">
-<a href="#section-8" class="section-number selfRef">8. </a><a href="#name-security-considerations" class="section-name selfRef">Security Considerations</a>
+<a href="#section-7" class="section-number selfRef">7. </a><a href="#name-security-considerations" class="section-name selfRef">Security Considerations</a>
       </h2>
-<p id="section-8-1">None at this time.<a href="#section-8-1" class="pilcrow">¶</a></p>
+<p id="section-7-1">This document does not define any new protocol mechanisms and does not
+change the PCEP messages or objects defined in <span>[<a href="#RFC5440" class="cite xref">RFC5440</a>]</span>, <span>[<a href="#RFC8231" class="cite xref">RFC8231</a>]</span>,
+<span>[<a href="#RFC8281" class="cite xref">RFC8281</a>]</span>, or <span>[<a href="#RFC8697" class="cite xref">RFC8697</a>]</span>. The security considerations of those documents
+therefore continue to apply.<a href="#section-7-1" class="pilcrow">¶</a></p>
+<p id="section-7-2">The clarifications in this document aim to reduce the risk of
+interoperability problems that arise when implementations interpret
+PCEP behavior differently. Such divergence can have security relevant
+consequences such as inconsistent handling of reported state can cause a PCE
+to compute or install paths based on an inaccurate view of the network,
+and the absence of an agreed behavior toward an overloaded PCE can be
+exploited to amplify a denial-of-service condition by sustaining a flood
+of reports. Conversely, holding or throttling PCRpt messages toward an
+overloaded PCE, as described in the Overloaded PCE section, can delay
+the visibility of state changes, including those resulting from
+misconfiguration or compromise. The logging recommended in that section
+helps an operator detect such situations. Selective closing of PCEP
+sessions during overload is an operational control that should be
+governed by local policy.<a href="#section-7-2" class="pilcrow">¶</a></p>
 </section>
 </div>
-<div id="managability-considerations">
-<section id="section-9">
-      <h2 id="name-managability-considerations">
-<a href="#section-9" class="section-number selfRef">9. </a><a href="#name-managability-considerations" class="section-name selfRef">Managability Considerations</a>
+<div id="manageability-considerations">
+<section id="section-8">
+      <h2 id="name-manageability-consideration">
+<a href="#section-8" class="section-number selfRef">8. </a><a href="#name-manageability-consideration" class="section-name selfRef">Manageability Considerations</a>
       </h2>
-<p id="section-9-1">None at this time.<a href="#section-9-1" class="pilcrow">¶</a></p>
+<p id="section-8-1">The logical datastores described in this document (the PCRPT-LSP-DB,
+the optional EXTENDED-LSP-DB, and the PCE-ASSO-DB) are useful points of
+operational visibility. Where an implementation exposes them, they map
+naturally onto state data models, for example YANG. An operator
+benefits from being able to read these datastores in order to
+understand the state held by a PCEP speaker.<a href="#section-8-1" class="pilcrow">¶</a></p>
+<p id="section-8-2">Because the PCRPT-LSP-DB on a PCC and on a PCE can lag one another
+during the convergence windows described in the Synchronization
+section, an operator may need to verify that the two are aligned. This
+can be done, for example, by comparing the set of reported LSPs and
+their last-reported state, or by observing the state synchronization
+procedures of <span>[<a href="#RFC8231" class="cite xref">RFC8231</a>]</span>.<a href="#section-8-2" class="pilcrow">¶</a></p>
+<p id="section-8-3">As described in the Overloaded PCE section, a PCC that throttles or
+holds PCRpt messages toward an overloaded PCE should log that it is
+doing so, applying thresholding to the rate of log generation, so that
+an operator can determine what is happening.<a href="#section-8-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="iana-considerations">
-<section id="section-10">
+<section id="section-9">
       <h2 id="name-iana-considerations">
-<a href="#section-10" class="section-number selfRef">10. </a><a href="#name-iana-considerations" class="section-name selfRef">IANA Considerations</a>
+<a href="#section-9" class="section-number selfRef">9. </a><a href="#name-iana-considerations" class="section-name selfRef">IANA Considerations</a>
       </h2>
-<p id="section-10-1">None at this time.<a href="#section-10-1" class="pilcrow">¶</a></p>
+<p id="section-9-1">This document has no IANA actions.<a href="#section-9-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="sec-normative-references">
-<section id="section-11">
+<section id="section-10">
       <h2 id="name-normative-references">
-<a href="#section-11" class="section-number selfRef">11. </a><a href="#name-normative-references" class="section-name selfRef">Normative References</a>
+<a href="#section-10" class="section-number selfRef">10. </a><a href="#name-normative-references" class="section-name selfRef">Normative References</a>
       </h2>
 <dl class="references">
-<dt id="RFC2119">[RFC2119]</dt>
-      <dd>
-<span class="refAuthor">Bradner, S.</span>, <span class="refTitle">"Key words for use in RFCs to Indicate Requirement Levels"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 2119</span>, <span class="seriesInfo">DOI 10.17487/RFC2119</span>, <time datetime="1997-03" class="refDate">March 1997</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc2119">https://www.rfc-editor.org/rfc/rfc2119</a>&gt;</span>. </dd>
-<dd class="break"></dd>
 <dt id="RFC3209">[RFC3209]</dt>
       <dd>
 <span class="refAuthor">Awduche, D.</span>, <span class="refAuthor">Berger, L.</span>, <span class="refAuthor">Gan, D.</span>, <span class="refAuthor">Li, T.</span>, <span class="refAuthor">Srinivasan, V.</span>, and <span class="refAuthor">G. Swallow</span>, <span class="refTitle">"RSVP-TE: Extensions to RSVP for LSP Tunnels"</span>, <span class="seriesInfo">RFC 3209</span>, <span class="seriesInfo">DOI 10.17487/RFC3209</span>, <time datetime="2001-12" class="refDate">December 2001</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc3209">https://www.rfc-editor.org/rfc/rfc3209</a>&gt;</span>. </dd>
 <dd class="break"></dd>
-<dt id="RFC8174">[RFC8174]</dt>
+<dt id="RFC4655">[RFC4655]</dt>
       <dd>
-<span class="refAuthor">Leiba, B.</span>, <span class="refTitle">"Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 8174</span>, <span class="seriesInfo">DOI 10.17487/RFC8174</span>, <time datetime="2017-05" class="refDate">May 2017</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8174">https://www.rfc-editor.org/rfc/rfc8174</a>&gt;</span>. </dd>
+<span class="refAuthor">Farrel, A.</span>, <span class="refAuthor">Vasseur, J.-P.</span>, and <span class="refAuthor">J. Ash</span>, <span class="refTitle">"A Path Computation Element (PCE)-Based Architecture"</span>, <span class="seriesInfo">RFC 4655</span>, <span class="seriesInfo">DOI 10.17487/RFC4655</span>, <time datetime="2006-08" class="refDate">August 2006</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc4655">https://www.rfc-editor.org/rfc/rfc4655</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC5440">[RFC5440]</dt>
+      <dd>
+<span class="refAuthor">Vasseur, JP., Ed.</span> and <span class="refAuthor">JL. Le Roux, Ed.</span>, <span class="refTitle">"Path Computation Element (PCE) Communication Protocol (PCEP)"</span>, <span class="seriesInfo">RFC 5440</span>, <span class="seriesInfo">DOI 10.17487/RFC5440</span>, <time datetime="2009-03" class="refDate">March 2009</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc5440">https://www.rfc-editor.org/rfc/rfc5440</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC8231">[RFC8231]</dt>
       <dd>
 <span class="refAuthor">Crabbe, E.</span>, <span class="refAuthor">Minei, I.</span>, <span class="refAuthor">Medved, J.</span>, and <span class="refAuthor">R. Varga</span>, <span class="refTitle">"Path Computation Element Communication Protocol (PCEP) Extensions for Stateful PCE"</span>, <span class="seriesInfo">RFC 8231</span>, <span class="seriesInfo">DOI 10.17487/RFC8231</span>, <time datetime="2017-09" class="refDate">September 2017</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8231">https://www.rfc-editor.org/rfc/rfc8231</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8281">[RFC8281]</dt>
+      <dd>
+<span class="refAuthor">Crabbe, E.</span>, <span class="refAuthor">Minei, I.</span>, <span class="refAuthor">Sivabalan, S.</span>, and <span class="refAuthor">R. Varga</span>, <span class="refTitle">"Path Computation Element Communication Protocol (PCEP) Extensions for PCE-Initiated LSP Setup in a Stateful PCE Model"</span>, <span class="seriesInfo">RFC 8281</span>, <span class="seriesInfo">DOI 10.17487/RFC8281</span>, <time datetime="2017-12" class="refDate">December 2017</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8281">https://www.rfc-editor.org/rfc/rfc8281</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC8697">[RFC8697]</dt>
     <dd>
@@ -1758,8 +1914,8 @@ it is overloaded, otherwise the the PCRPT-LSP-DB on PCE may go out of sync.<a hr
       <h2 id="name-acknowledgments">
 <a href="#name-acknowledgments" class="section-name selfRef">Acknowledgments</a>
       </h2>
-<p id="appendix-A-1">The authors would like to thank Adrian Farrel and Tom Petch for useful review and feedback.
-comments.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
+<p id="appendix-A-1">The authors would like to thank Adrian Farrel for a thorough review on this document
+and Tom Petch and Boris Hassanov for useful review and feedback.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="contributors">

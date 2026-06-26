@@ -5,7 +5,7 @@
 Path Computation Element                                    M. Koldychev
 Internet-Draft                                              S. Sivabalan
 Intended status: Informational                         Ciena Corporation
-Expires: 24 December 2025                                        S. Peng
+Expires: 28 December 2026                                        S. Peng
                                                      Huawei Technologies
                                                               D. Achaval
                                                                    Nokia
@@ -13,7 +13,7 @@ Expires: 24 December 2025                                        S. Peng
                                                    Juniper Networks, Inc
                                                                 A. Stone
                                                                    Nokia
-                                                            22 June 2025
+                                                            26 June 2026
 
 
                      PCEP Operational Clarification
@@ -22,8 +22,11 @@ Expires: 24 December 2025                                        S. Peng
 Abstract
 
    This document clarifies certain operational behavior aspects of the
-   PCEP protocol.  The content of this document has been compiled based
-   on several interop exercises.
+   Path Computation Element Communication Protocol (PCEP).  The content
+   of this document has been compiled based on several interop
+   exercises.  This document does not make any updates or revisions to
+   any PCEP specifications, instead it provides additional information
+   to aid in the interpretation of those documents.
 
 Discussion Venues
 
@@ -51,11 +54,11 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 24 December 2025.
+   This Internet-Draft will expire on 28 December 2026.
 
 Copyright Notice
 
-   Copyright (c) 2025 IETF Trust and the persons identified as the
+   Copyright (c) 2026 IETF Trust and the persons identified as the
    document authors.  All rights reserved.
 
    This document is subject to BCP 78 and the IETF Trust's Legal
@@ -70,60 +73,55 @@ Copyright Notice
 Table of Contents
 
    1.  Introduction
-   2.  Requirements Language
-   3.  Terminology
-   4.  PCEP LSP Database
-     4.1.  Structure
-     4.2.  Synchronization
-     4.3.  Make before Break (MBB)
-       4.3.1.  Successful MBB
-       4.3.2.  Aborted MBB
-   5.  PCEP Association Database
-     5.1.  LSPs in same Association
-     5.2.  Switch Association during MBB
-   6.  Computation Constraints
-   7.  Overloaded PCE
-   8.  Security Considerations
-   9.  Managability Considerations
-   10. IANA Considerations
-   11. Normative References
+   2.  Terminology
+   3.  PCEP LSP Database
+     3.1.  Structure
+     3.2.  Synchronization
+     3.3.  Make before Break (MBB)
+       3.3.1.  Successful MBB
+       3.3.2.  Aborted MBB
+   4.  PCEP Association Database
+     4.1.  LSPs in same Association
+     4.2.  Switch Association during MBB
+   5.  Computation Constraints
+   6.  Overloaded PCE
+     6.1.  Reports toward an Overloaded PCE
+   7.  Security Considerations
+   8.  Manageability Considerations
+   9.  IANA Considerations
+   10. Normative References
    Acknowledgments
    Contributors
    Authors' Addresses
 
 1.  Introduction
 
-   Due to different interpretations of PCEP standards, it was found that
+   Due to different interpretations of the PCEP standards [RFC5440],
+   [RFC8231], [RFC8281], [RFC8697], and [RFC3209], it was found that
    implementations often had to adjust their behavior in order to
    interoperate.  The current document serves to clarify certain aspects
    of PCEP to make it easier to produce interoperable implementations of
    PCEP.
 
-2.  Requirements Language
+   This document does not make any updates or revisions to any PCEP
+   specifications.  It provides additional informational guidance to aid
+   in the consistent interpretation of those documents across
+   implementations.
 
-   The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
-   "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
-   "OPTIONAL" in this document are to be interpreted as described in
-   BCP 14 [RFC2119] [RFC8174] when, and only when, they appear in all
-   capitals, as shown here.
+2.  Terminology
 
-3.  Terminology
+   The following terminology is used in this document:
 
-   The following terminologies are used in this document:
+   PCC: Path Computation Client [RFC4655].
 
-   PCC: Path Computation Client.  Any client application requesting a
-   path computation to be performed by a Path Computation Element.
+   PCE: Path Computation Element [RFC4655].
 
-   PCE: Path Computation Element.  An entity (component, application, or
-   network node) that is capable of computing a network path or route
-   based on a network graph and applying computational constraints.
-
-   PCEP: Path Computation Element Protocol.
+   PCEP: Path Computation Element Communication Protocol [RFC5440].
 
    MBB: Make-Before-Break.  A procedure during which the head-end of a
    traffic-engineered path wishes to move traffic to a new path without
    losing any traffic, by first "making" a new path and then "breaking"
-   the old path.
+   the old path (see [RFC3209]).
 
    Association parameters: As described in [RFC8697], the combination of
    the mandatory fields Association type, Association ID and Association
@@ -138,44 +136,63 @@ Table of Contents
    association type.
 
    ERO: Explicit Route Object is the path of the LSP encoded into a PCEP
-   object.  In this document, an empty ERO object, i.e., without any
-   subobjects, is represented with notation "ERO={}".  An ERO object
-   containing a given sequence of subobjects is represented as
-   "ERO={A}".
+   object.  This document distinguishes three cases for the ERO object,
+   because an absent ERO and an empty ERO are not equivalent:
+
+   *  An absent ERO object, i.e., one not included in the message at
+      all.
+
+   *  An empty ERO object, i.e., one that is present but carries no
+      subobjects, is represented with the notation "ERO={}".
+
+   *  An ERO object containing a given sequence of subobjects is
+      represented as "ERO={A}".
 
    PCRPT-LSP-DB: PCEP Reported Label Switched Path Database.  A logical
-   datastore that captures the reported state information of Label
-   Switched Paths (LSPs) within a PCEP speaker.  This term is not
-   defined in the PCE architecture; however, it is used in this document
-   to describe how a PCEP speaker internally maintains LSP-related state
-   information reported via PCRpt messages.
+   datastore that captures the reported state of Label Switched Paths
+   (LSPs), organized as Tunnels and their LSPs.  Each PCEP speaker
+   maintains its own local copy, populated from PCRpt messages.  On a
+   PCE, the PCRPT-LSP-DB holds the state reported by all PCCs that
+   report to that PCE.  On a PCC, it holds the state for the LSPs for
+   which that PCC is the head-end.  This term is not defined in the PCE
+   architecture; however, it is used in this document to describe how a
+   PCEP speaker maintains LSP-related state reported via PCRpt messages.
 
-   EXTENDED-LSP-DB: Extended Label Switched Path Database.  An
-   implementation-specific logical datastore used to capture information
-   related to a Label Switched Path.  It may be keyed using the same
-   identifiers as the PCRPT-LSP-DB.  This term is not defined in the PCE
-   architecture; however is used in this document to refer to a
-   conceptual datastore that can include additional attributes—such as
-   desired state, telemetry data, and other information not defined
-   within IETF PCE working group documents.
+   EXTENDED-LSP-DB: Extended Label Switched Path Database.  A single,
+   optional, implementation-specific logical datastore that holds
+   entries for multiple LSPs, keyed using the same identifiers as the
+   PCRPT-LSP-DB.  It is not required by a conforming PCEP
+   implementation.  It is typically maintained on the PCE to hold
+   additional attributes such as desired (intended) state, telemetry
+   data, operator configuration, and other information not defined
+   within IETF PCE working group documents; a PCC may maintain an
+   equivalent datastore where useful.  This term is not defined in the
+   PCE architecture and is used in this document only to refer to this
+   conceptual datastore.
+
+   PCE-ASSO-DB: PCEP Association Database.  A logical datastore that
+   captures PCEP Association membership, populated by PCRpt messages
+   and/or by configuration on the PCE.  This term is not defined in the
+   PCE architecture; it is used in this document to describe how a PCE
+   maintains Association state.  See the PCEP Association Database
+   section.
 
    PLSP-ID (Path LSP Identifier): Introduced in [RFC8231].  A unique
    identifier used in PCEP to distinguish a specific LSP between a PCC
    and a PCE which is constant for the lifetime of a PCEP session.
 
-4.  PCEP LSP Database
+3.  PCEP LSP Database
 
    This document uses the concept of the PCRPT-LSP-DB, a database of
    actual LSP state in the network, to illustrate the internal state of
-   PCEP speakers in response to PcRpt messages.
+   PCEP speakers in response to PCRpt messages.
 
    Note that the term "LSP", which stands for "Label Switched Path", if
    taken too literally, would restrict the discussion to the MPLS
    dataplane only.  In this document, the term "LSP" is applied to non-
-   MPLS paths as well, to avoid renaming the term.  Alternatively, the
-   term "LSP" could be replaced with "Instance".
+   MPLS paths as well, to avoid renaming the term.
 
-4.1.  Structure
+3.1.  Structure
 
    The distinction between Tunnels and LSPs in the PCRPT-LSP-DB is
    essential for accurately modeling state information in PCEP,
@@ -187,9 +204,11 @@ Table of Contents
    identified by the PLSP-ID in the LSP object and/or the SYMBOLIC-NAME
    (see [RFC8231]).
 
-   A Tunnel may or may not correspond to an actual tunnel on the router.
-   For example, working and protect paths can be implemented as a single
-   tunnel interface, but in PCEP, these are represented as two different
+   A Tunnel in PCEP does not necessarily map one-to-one to a single
+   tunnel construct on the router.  A tunnel into which a client inserts
+   traffic may be supported by one or more underlying transport paths.
+   For example, the working and protect paths of a single tunnel
+   interface on the router are represented in PCEP as two different
    Tunnels with different PLSP-IDs.
 
    An LSP can be viewed as an instance of a Tunnel.  In steady state, a
@@ -197,7 +216,7 @@ Table of Contents
    procedures (see [RFC3209]), multiple LSPs may exist simultaneously to
    represent both the new and old instances during the transition.
 
-4.2.  Synchronization
+3.2.  Synchronization
 
    Since the PCRPT-LSP-DB contains PCEP-specific information such as
    PLSP-IDs, which remain constant for the duration of a PCEP session,
@@ -209,23 +228,26 @@ Table of Contents
    PCE.
 
    The PCE is intended to act based on the most recent state available
-   in the PCRPT-LSP-DB, which represents the actual state of Label
+   in the PCRPT-LSP-DB, which represents the reported state of Label
    Switched Paths (LSPs) in the network.  This does not preclude the PCE
    from leveraging information obtained outside the PCRPT-LSP-DB.  For
    example, implementation-specific mechanisms may be used to collect
    traffic statistics that can be considered during path computation.
-   Such information is not part of the PCRPT-LSP-DB itself, but may
-   reference it.  Additional data such as desired state, telemetry, or
-   operator-intended configurations—may be maintained in a separate,
-   implementation-specific logical datastore referred to as the
-   EXTENDED-LSP-DB.
+   Such additional information, including desired (intended) state,
+   telemetry, and operator configuration, is not part of the PCRPT-LSP-
+   DB itself and may instead be held in the separate, optional EXTENDED-
+   LSP-DB described in the Terminology section.
 
-   Both the PCE and PCC maintain a PCRPT-LSP-DB that reflects the
-   reported (actual) state of LSPs.  Implementations may choose to store
-   desired state information or other attributes in the EXTENDED-LSP-DB.
-   It is important to note that the PCRPT-LSP-DB reflects only the live
-   view of the network and does not imply alignment with the desired
-   state.
+   The PCRPT-LSP-DB reflects the reported state of LSPs and does not
+   imply alignment with the desired state.  It also does not necessarily
+   reflect the live state of the network, because there are two
+   convergence windows during which the databases can lag the network:
+
+   *  The network state has changed, but the PCC has not yet updated its
+      own PCRPT-LSP-DB.
+
+   *  The PCC has updated its PCRPT-LSP-DB, but the PCRpt carrying that
+      change has not yet been received and processed by the PCE.
 
    For example, in the case of a PCE-initiated LSP, a change in the LSP
    configuration made by an operator represents a modification to the
@@ -237,14 +259,14 @@ Table of Contents
    exchange is complete, the PCRPT-LSP-DBs on both the PCC and the PCE
    are synchronized.
 
-4.3.  Make before Break (MBB)
+3.3.  Make before Break (MBB)
 
    Due to variations in how different implementations interpret or
-   handle MBB procedures—sometimes resulting in incorrect message
-   processing or misinterpretation—the following section provides
+   handle MBB procedures, sometimes resulting in incorrect message
+   processing or misinterpretation, the following section provides
    illustrative examples to clarify expected MBB behavior.
 
-4.3.1.  Successful MBB
+3.3.1.  Successful MBB
 
    Below is an example of performing MBB to switch a Tunnel from one
    path to another.  The path encoded into the ERO object is represented
@@ -259,7 +281,9 @@ Table of Contents
    | PLSP-ID=100     | LSP-ID=2, ERO={A}, OPER=UP                  |
    +---------------------------------------------------------------+
 
-                   Figure 1: Content of LSP DB
+                   Figure 1: Content of PCRPT-LSP-DB
+
+   The resulting content of the PCRPT-LSP-DB is shown in Figure 1.
 
    PCC initiates the MBB procedure by creating a new LSP with LSP-ID=3.
    It does not matter what triggered the creation of the new LSP, it
@@ -281,7 +305,9 @@ Table of Contents
    |                 | LSP-ID=3, ERO={B}, OPER=UP                  |
    +---------------------------------------------------------------+
 
-                   Figure 2: Content of LSP DB
+                   Figure 2: Content of PCRPT-LSP-DB
+
+   Both LSPs now exist simultaneously, as shown in Figure 2.
 
    After traffic has successfully switched to the new LSP, the PCC
    cleans up the old LSP.  PCC sends PCRpt(R-FLAG=1, PLSP-ID=100, LSP-
@@ -293,9 +319,11 @@ Table of Contents
    | PLSP-ID=100     | LSP-ID=3, ERO={B}, OPER=UP                  |
    +---------------------------------------------------------------+
 
-                   Figure 3: Content of LSP DB
+                   Figure 3: Content of PCRPT-LSP-DB
 
-4.3.2.  Aborted MBB
+   Only the new LSP remains, as shown in Figure 3.
+
+3.3.2.  Aborted MBB
 
    The MBB process can abort when the newly created LSP is destroyed
    before it is installed as traffic carrying.  This scenario is
@@ -310,7 +338,9 @@ Table of Contents
    | PLSP-ID=100     | LSP-ID=2, OPER=UP                           |
    +---------------------------------------------------------------+
 
-                   Figure 4: Content of LSP DB
+                   Figure 4: Content of PCRPT-LSP-DB
+
+   The initial content of the PCRPT-LSP-DB is shown in Figure 4.
 
    MBB procedure is initiated, a new LSP is created with LSP-ID=3.  LSP
    is currently being established, so its oper state is DOWN.  PCC sends
@@ -323,7 +353,10 @@ Table of Contents
    |                 | LSP-ID=3, OPER=DOWN                         |
    +---------------------------------------------------------------+
 
-                   Figure 5: Content of LSP DB
+                   Figure 5: Content of PCRPT-LSP-DB
+
+   The new LSP is being established while the old LSP remains UP, as
+   shown in Figure 5.
 
    MBB procedure is aborted.  PCC sends PCRpt(R-FLAG=1, PLSP-ID=100,
    LSP-ID=3).
@@ -334,26 +367,34 @@ Table of Contents
    | PLSP-ID=100     | LSP-ID=2, OPER=UP                           |
    +---------------------------------------------------------------+
 
-                   Figure 6: Content of LSP DB
+                   Figure 6: Content of PCRPT-LSP-DB
 
-5.  PCEP Association Database
+   The new LSP has been removed and only the original LSP remains, as
+   shown in Figure 6.
 
-   PCEP Association is the instantiate of a group containing at least
-   one LSP.
+4.  PCEP Association Database
 
-   The PCE ASSO DB is populated by PCRpt messages and/or via
+   A PCEP Association is the instantiation of a group containing at
+   least one LSP.
+
+   The PCE-ASSO-DB is populated by PCRpt messages and/or via
    configuration on the PCE itself.  An Association is identified by the
    Association Parameters.  As the Association Parameters contain many
    fields, all fields are grouped into a single value for convenience.
    The notation ASSO_PARAM=A and ASSO_PARAM=B is used to refer to
    different PCEP Associations: A and B, respectively.
 
-5.1.  LSPs in same Association
+   The message parameter notation used in the examples below (for
+   example, R-FLAG, OPER-FLAG, ASSO_R_FLAG, and ASSO_PARAM) refers to
+   the corresponding flags and fields of the LSP and ASSOCIATION objects
+   defined in [RFC8231] and [RFC8697].
+
+4.1.  LSPs in same Association
 
    The following example illustrates how LSPs join the same Association.
 
-   PCC creates the first LSP.  PCC sends PCRpt(R-FLAG=0, PLSP-ID=100,
-   LSP-ID=1, ASSO_PARAM=A, ASSO_R_FLAG=0).
+   The PCC creates the first LSP.  The PCC sends PCRpt(R-FLAG=0, PLSP-
+   ID=100, LSP-ID=1, ASSO_PARAM=A, ASSO_R_FLAG=0).
 
    +---------------------------------------------------------------+
    | ASSO            | LSP                                         |
@@ -361,29 +402,12 @@ Table of Contents
    | ASSO_PARAM=A    | PLSP-ID=100, LSP-ID=1                       |
    +---------------------------------------------------------------+
 
-                   Figure 7: Content of PCE ASSO DB
+                   Figure 7: Content of PCE-ASSO-DB
 
-   PCC creates the second LSP.  PCC sends PCRpt(R-FLAG=0, PLSP-ID=200,
-   LSP-ID=1, ASSO_PARAM=A, ASSO_R_FLAG=0).
+   The resulting content of the PCE-ASSO-DB is shown in Figure 7.
 
-   +---------------------------------------------------------------+
-   | ASSO            | LSP                                         |
-   +-----------------+---------------------------------------------+
-   | ASSO_PARAM=A    | PLSP-ID=100, LSP-ID=1                       |
-   |                 | PLSP-ID=200, LSP-ID=1                       |
-   +---------------------------------------------------------------+
-
-                   Figure 8: Content of PCE ASSO DB
-
-   PCC updates the first LSP.  As [RFC8697] indicates, subsequent PcRpt
-   should include only the associations that are being modified or
-   removed.  Therefore it is optional as to send the ASSOCIATION object
-   in this PCRpt, since the LSP is already in the Association.  PCC
-   sends PCRpt(R-FLAG=0, PLSP-ID=100, LSP-ID=1).  The content of the PCE
-   ASSO DB is unchanged.  Note that the PCC sends the ASSOCIATION OBJECT
-   in the first PCRpt during SYNC state, even if it has already issued a
-   PCRpt with the association object sometime in the past with this PCE.
-   The synchronization steps outlined in [RFC8697] are to be followed.
+   The PCC creates the second LSP.  The PCC sends PCRpt(R-FLAG=0, PLSP-
+   ID=200, LSP-ID=1, ASSO_PARAM=A, ASSO_R_FLAG=0).
 
    +---------------------------------------------------------------+
    | ASSO            | LSP                                         |
@@ -392,10 +416,35 @@ Table of Contents
    |                 | PLSP-ID=200, LSP-ID=1                       |
    +---------------------------------------------------------------+
 
-                   Figure 9: Content of PCE ASSO DB
+                   Figure 8: Content of PCE-ASSO-DB
 
-   PCC decides to delete the second LSP.  PCC sends PCRpt(R-FLAG=1,
-   PLSP-ID=200, LSP-ID=1).
+   Both LSPs are now members of the same Association, as shown in
+   Figure 8.
+
+   The PCC updates the first LSP.  As [RFC8697] indicates, subsequent
+   PCRpt should include only the associations that are being modified or
+   removed.  Therefore it is optional whether to send the ASSOCIATION
+   object in this PCRpt, since the LSP is already in the Association.
+   The PCC sends PCRpt(R-FLAG=0, PLSP-ID=100, LSP-ID=1).  The content of
+   the PCE-ASSO-DB is unchanged.  Note that the PCC sends the
+   ASSOCIATION OBJECT in the first PCRpt during SYNC state, even if it
+   has already issued a PCRpt with the association object sometime in
+   the past with this PCE.  The synchronization steps outlined in
+   [RFC8697] are to be followed.
+
+   +---------------------------------------------------------------+
+   | ASSO            | LSP                                         |
+   +-----------------+---------------------------------------------+
+   | ASSO_PARAM=A    | PLSP-ID=100, LSP-ID=1                       |
+   |                 | PLSP-ID=200, LSP-ID=1                       |
+   +---------------------------------------------------------------+
+
+                   Figure 9: Content of PCE-ASSO-DB
+
+   The content of the PCE-ASSO-DB is unchanged, as shown in Figure 9.
+
+   The PCC decides to delete the second LSP.  The PCC sends
+   PCRpt(R-FLAG=1, PLSP-ID=200, LSP-ID=1).
 
    +---------------------------------------------------------------+
    | ASSO            | LSP                                         |
@@ -403,11 +452,14 @@ Table of Contents
    | ASSO_PARAM=A    | PLSP-ID=100, LSP-ID=1                       |
    +---------------------------------------------------------------+
 
-                   Figure 10: Content of PCE ASSO DB
+                   Figure 10: Content of PCE-ASSO-DB
 
-   PCC decides to remove the first LSP from the Association, but not
-   delete the LSP itself.  PCC sends PCRpt(R-FLAG=0, PLSP-ID=100, LSP-
-   ID=1, ASSO_PARAM=A, ASSO_R_FLAG=1).  The PCE ASSO DB is now empty.
+   Only the first LSP remains in the Association, as shown in Figure 10.
+
+   The PCC decides to remove the first LSP from the Association, but not
+   delete the LSP itself.  The PCC sends PCRpt(R-FLAG=0, PLSP-ID=100,
+   LSP- ID=1, ASSO_PARAM=A, ASSO_R_FLAG=1).  The PCE-ASSO-DB is now
+   empty.
 
    +---------------------------------------------------------------+
    | ASSO            | LSP                                         |
@@ -415,9 +467,11 @@ Table of Contents
    | -               |                                             |
    +---------------------------------------------------------------+
 
-                   Figure 11: Content of PCE ASSO DB
+                   Figure 11: Content of PCE-ASSO-DB
 
-5.2.  Switch Association during MBB
+   The Association is now empty, as shown in Figure 11.
+
+4.2.  Switch Association during MBB
 
    The following example illustrates how a Tunnel goes through MBB and
    switches from Association A to Association B.
@@ -428,8 +482,8 @@ Table of Contents
    Associations, this may be done when switching from one Association to
    another.
 
-   PCC creates the first LSP.  PCC sends PCRpt(R-FLAG=0, PLSP-ID=100,
-   LSP-ID=1, ASSO_PARAM=A, ASSO_R_FLAG=0).
+   The PCC creates the first LSP.  The PCC sends PCRpt(R-FLAG=0, PLSP-
+   ID=100, LSP-ID=1, ASSO_PARAM=A, ASSO_R_FLAG=0).
 
    +---------------------------------------------------------------+
    | ASSO            | LSP                                         |
@@ -437,10 +491,13 @@ Table of Contents
    | ASSO_PARAM=A    | PLSP-ID=100, LSP-ID=1                       |
    +---------------------------------------------------------------+
 
-                   Figure 12: Content of PCE ASSO DB
+                   Figure 12: Content of PCE-ASSO-DB
 
-   PCC creates the MBB LSP in a different Association.  PCC sends
-   PCRpt(R-FLAG=0, PLSP-ID=100, LSP-ID=2, ASSO_PARAM=B, ASSO_R_FLAG=0).
+   The resulting content of the PCE-ASSO-DB is shown in Figure 12.
+
+   The PCC creates the MBB LSP in a different Association.  The PCC
+   sends PCRpt(R-FLAG=0, PLSP-ID=100, LSP-ID=2, ASSO_PARAM=B,
+   ASSO_R_FLAG=0).
 
    +---------------------------------------------------------------+
    | ASSO            | LSP                                         |
@@ -450,10 +507,13 @@ Table of Contents
    | ASSO_PARAM=B    | PLSP-ID=100, LSP-ID=2                       |
    +---------------------------------------------------------------+
 
-                   Figure 13: Content of PCE ASSO DB
+                   Figure 13: Content of PCE-ASSO-DB
 
-   PCC deletes the old LSP.  PCC sends PCRpt(R-FLAG=1, PLSP-ID=100, LSP-
-   ID=1).
+   The two LSPs of the Tunnel are now in different Associations, as
+   shown in Figure 13.
+
+   The PCC deletes the old LSP.  The PCC sends PCRpt(R-FLAG=1, PLSP-
+   ID=100, LSP- ID=1).
 
    +---------------------------------------------------------------+
    | ASSO            | LSP                                         |
@@ -461,9 +521,11 @@ Table of Contents
    | ASSO_PARAM=B    | PLSP-ID=100, LSP-ID=2                       |
    +---------------------------------------------------------------+
 
-                   Figure 14: Content of PCE ASSO DB
+                   Figure 14: Content of PCE-ASSO-DB
 
-6.  Computation Constraints
+   Only the new LSP in Association B remains, as shown in Figure 14.
+
+5.  Computation Constraints
 
    As well as reporting any state change in the network on a PCRpt
    message, a PCC may also change the parameters of a delegated LSP.
@@ -471,17 +533,17 @@ Table of Contents
    it wishes the PCE to apply as it computes any updated paths in the
    future.  For any PCEP object that specifies a path computation
    constraint and that does not have a defined explicit removal flag,
-   the absence of that entire object on a repeat or follow-up PcRpt
+   the absence of that entire object on a repeat or follow-up PCRpt
    message indicates removal of the constraint previously specified by
-   that object.  For example, suppose the first PcRpt contains an LSPA
-   object with some affinity constraints.  Then if a subsequent PcRpt
+   that object.  For example, suppose the first PCRpt contains an LSPA
+   object with some affinity constraints.  Then if a subsequent PCRpt
    does not contain an LSPA object, then this means that the previously
    specified affinity constraints do not apply anymore.  Same applies to
    all PCEP objects, like METRIC, BANDWIDTH, etc., which do not have an
    explicit flag for removal.  This simply ensures that it is possible
    to remove a constraint without using an explicit removal flag.
 
-7.  Overloaded PCE
+6.  Overloaded PCE
 
    [RFC5440] defines the concept of an Overloaded PCE and explains how a
    PCE may signal to a PCC that it is congested, instructing that "no
@@ -490,7 +552,7 @@ Table of Contents
 
    In the case of an overloaded PCE, a PCC implementation could choose
    to wait for the PCE to no longer be overloaded or instead send a
-   PcReq to a backup, non-overloaded PCE instead.
+   PCReq to a backup, non-overloaded PCE instead.
 
    [RFC8231] builds upon [RFC5440] by introducing the concept of a
    Stateful PCE, which allows delegation of LSP control to a single PCE.
@@ -506,43 +568,150 @@ Table of Contents
    delegation as per [RFC8281], the overloaded PCE may return the
    delegation to the PCC.
 
-   The PCE will continue to send PcRpt messages to PCE even though it
-   may indicate it is overloaded, otherwise the the PCRPT-LSP-DB on PCE
-   may go out of sync.
+6.1.  Reports toward an Overloaded PCE
 
-8.  Security Considerations
+   The guidance in this section clarifies behavior for reports and does
+   not modify [RFC5440].  Any change that would require a PCC to stop
+   sending reports toward an overloaded PCE would be an update to
+   [RFC5440] and is out of scope for this document.
 
-   None at this time.
+   There is a trade-off in how a PCC handles PCRpt messages while a PCE
+   signals that it is overloaded.  Fully reprocessing a flood of PCRpt
+   messages consumes CPU and memory on the PCE, and so continuing to
+   send reports could prolong or worsen the overload condition.However,
+   the longer the PCE is without the latest reported state, the more
+   likely it is to compute paths using stale information.
 
-9.  Managability Considerations
+   What it means for a PCE to be overloaded is implementation specific.
+   For example, an implementation may use separate resources for
+   ingesting reports and for performing computation, in which case it
+   may be overloaded for computation while still able to process
+   reports.  A PCE may also wish to remain synchronized with the network
+   without yet participating in active computation, for example while a
+   new instance is being bootstrapped.
 
-   None at this time.
+   Given these trade offs, the following describes the behavior a PCC
+   may adopt toward an overloaded PCE.  Sending reports as usual is the
+   baseline interoperable behavior and throttling reports is an optional
+   behavior:
 
-10.  IANA Considerations
+   *  Sending reports as usual: the PCC continues to send PCRpt messages
+      so that the PCRPT-LSP-DB on the PCE remains synchronized.  This is
+      the baseline behavior and requires no change to existing
+      implementations.
 
-   None at this time.
+   *  Throttling reports: the PCC may make a local decision about
+      whether to immediately send a PCRpt message to the PCE or to hold
+      that message until the PCE indicates it is no longer overloaded.
+      This decision may depend on how significant the change to the LSP
+      is, how long the message has been held, and how many other
+      messages are held for the same reason.  In all cases the PCC
+      should log the situation, applying thresholding to the rate of
+      generation of log events, so that an operator can determine what
+      is happening.
 
-11.  Normative References
+   Stopping reports entirely while the PCE is overloaded is not
+   recommended, because it risks the PCRPT-LSP-DB on the PCE going out
+   of sync with the network for the full duration of the overload
+   condition.
 
-   [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
-              Requirement Levels", BCP 14, RFC 2119,
-              DOI 10.17487/RFC2119, March 1997,
-              <https://www.rfc-editor.org/rfc/rfc2119>.
+   The decision to throttle cannot depend on local policy alone, because
+   some reports remain significant regardless of policy.  At a minimum,
+   the following reports should not be throttled:
+
+   *  A PCRpt sent in response to a PCUpd, since a PCE may still take
+      actions on a delegated LSP while marked overloaded.
+
+   *  PCRpt messages sent as part of state synchronization during
+      session establishment.
+
+   A PCC may throttle other less significant reports such as frequent or
+   redundant updates, for example local protection availability flags.
+
+   As an alternative to per-report throttling, a PCE under overload may
+   selectively close one or more PCEP sessions, choosing which sessions
+   to prioritize.  When the overload condition clears, the sessions are
+   re-established and standard state synchronization [RFC8231] brings
+   the PCE back in sync with the latest state.  This avoids the
+   complexity of deciding, on a per-report basis, which reports to hold
+   or drop.
+
+7.  Security Considerations
+
+   This document does not define any new protocol mechanisms and does
+   not change the PCEP messages or objects defined in [RFC5440],
+   [RFC8231], [RFC8281], or [RFC8697].  The security considerations of
+   those documents therefore continue to apply.
+
+   The clarifications in this document aim to reduce the risk of
+   interoperability problems that arise when implementations interpret
+   PCEP behavior differently.  Such divergence can have security
+   relevant consequences such as inconsistent handling of reported state
+   can cause a PCE to compute or install paths based on an inaccurate
+   view of the network, and the absence of an agreed behavior toward an
+   overloaded PCE can be exploited to amplify a denial-of-service
+   condition by sustaining a flood of reports.  Conversely, holding or
+   throttling PCRpt messages toward an overloaded PCE, as described in
+   the Overloaded PCE section, can delay the visibility of state
+   changes, including those resulting from misconfiguration or
+   compromise.  The logging recommended in that section helps an
+   operator detect such situations.  Selective closing of PCEP sessions
+   during overload is an operational control that should be governed by
+   local policy.
+
+8.  Manageability Considerations
+
+   The logical datastores described in this document (the PCRPT-LSP-DB,
+   the optional EXTENDED-LSP-DB, and the PCE-ASSO-DB) are useful points
+   of operational visibility.  Where an implementation exposes them,
+   they map naturally onto state data models, for example YANG.  An
+   operator benefits from being able to read these datastores in order
+   to understand the state held by a PCEP speaker.
+
+   Because the PCRPT-LSP-DB on a PCC and on a PCE can lag one another
+   during the convergence windows described in the Synchronization
+   section, an operator may need to verify that the two are aligned.
+   This can be done, for example, by comparing the set of reported LSPs
+   and their last-reported state, or by observing the state
+   synchronization procedures of [RFC8231].
+
+   As described in the Overloaded PCE section, a PCC that throttles or
+   holds PCRpt messages toward an overloaded PCE should log that it is
+   doing so, applying thresholding to the rate of log generation, so
+   that an operator can determine what is happening.
+
+9.  IANA Considerations
+
+   This document has no IANA actions.
+
+10.  Normative References
 
    [RFC3209]  Awduche, D., Berger, L., Gan, D., Li, T., Srinivasan, V.,
               and G. Swallow, "RSVP-TE: Extensions to RSVP for LSP
               Tunnels", RFC 3209, DOI 10.17487/RFC3209, December 2001,
               <https://www.rfc-editor.org/rfc/rfc3209>.
 
-   [RFC8174]  Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
-              2119 Key Words", BCP 14, RFC 8174, DOI 10.17487/RFC8174,
-              May 2017, <https://www.rfc-editor.org/rfc/rfc8174>.
+   [RFC4655]  Farrel, A., Vasseur, J.-P., and J. Ash, "A Path
+              Computation Element (PCE)-Based Architecture", RFC 4655,
+              DOI 10.17487/RFC4655, August 2006,
+              <https://www.rfc-editor.org/rfc/rfc4655>.
+
+   [RFC5440]  Vasseur, JP., Ed. and JL. Le Roux, Ed., "Path Computation
+              Element (PCE) Communication Protocol (PCEP)", RFC 5440,
+              DOI 10.17487/RFC5440, March 2009,
+              <https://www.rfc-editor.org/rfc/rfc5440>.
 
    [RFC8231]  Crabbe, E., Minei, I., Medved, J., and R. Varga, "Path
               Computation Element Communication Protocol (PCEP)
               Extensions for Stateful PCE", RFC 8231,
               DOI 10.17487/RFC8231, September 2017,
               <https://www.rfc-editor.org/rfc/rfc8231>.
+
+   [RFC8281]  Crabbe, E., Minei, I., Sivabalan, S., and R. Varga, "Path
+              Computation Element Communication Protocol (PCEP)
+              Extensions for PCE-Initiated LSP Setup in a Stateful PCE
+              Model", RFC 8281, DOI 10.17487/RFC8281, December 2017,
+              <https://www.rfc-editor.org/rfc/rfc8281>.
 
    [RFC8697]  Minei, I., Crabbe, E., Sivabalan, S., Ananthakrishnan, H.,
               Dhody, D., and Y. Tanaka, "Path Computation Element
@@ -553,8 +722,9 @@ Table of Contents
 
 Acknowledgments
 
-   The authors would like to thank Adrian Farrel and Tom Petch for
-   useful review and feedback. comments.
+   The authors would like to thank Adrian Farrel for a thorough review
+   on this document and Tom Petch and Boris Hassanov for useful review
+   and feedback.
 
 Contributors
 
